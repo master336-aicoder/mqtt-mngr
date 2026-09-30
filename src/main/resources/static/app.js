@@ -2,6 +2,7 @@
    对接 /api/v1/* REST 与 /ws WebSocket，视觉复刻 design/hifi/index.html（验收基准）。 */
 (function () {
   const TOKEN_KEY = 'mngr-token';
+  const SESSION_KEY = 'mngr-session-token';
 
   async function req(method, path, opt) {
     opt = opt || {};
@@ -14,7 +15,7 @@
     }
     const h = {};
     if (opt.body !== undefined) h['Content-Type'] = 'application/json';
-    const tk = localStorage.getItem(TOKEN_KEY) || '';
+    const tk = localStorage.getItem(SESSION_KEY) || localStorage.getItem(TOKEN_KEY) || '';
     if (tk) h['X-Mngr-Token'] = tk;
     const r = await fetch(url, { method, headers: h, body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined });
     let j;
@@ -52,7 +53,10 @@
     templates: ['消息工厂 <span>/</span> <span>消息模板</span>', '消息模板', '字段结构定义、样例反推、匹配预览与版本演进（不兼容变更 6002 拦截）。'],
     messaging: ['消息工厂 <span>/</span> <span>收发调试台</span>', '收发调试台', '发布消息并实时观察订阅流的模板归类结果；管理正式订阅。'],
     dlq: ['运维 <span>/</span> <span>死信 DLQ</span>', '死信 DLQ', '浏览解析/发送失败的消息，查看原因并重放回目标 Topic。'],
-    settings: ['运维 <span>/</span> <span>系统设置</span>', '系统设置', '存储模式、能力降级、安全与审计日志。']
+    settings: ['运维 <span>/</span> <span>系统设置</span>', '系统设置', '存储模式、能力降级、安全与审计日志。'],
+    users: ['系统管理 <span>/</span> <span>用户管理</span>', '用户管理', '管理系统用户、分配角色、重置密码。'],
+    roles: ['系统管理 <span>/</span> <span>角色管理</span>', '角色管理', '管理角色、分配菜单权限。'],
+    menus: ['系统管理 <span>/</span> <span>菜单管理</span>', '菜单管理', '维护系统菜单树、权限标识。']
   };
 
   const app = Vue.createApp({
@@ -63,19 +67,16 @@
         token: localStorage.getItem(TOKEN_KEY) || '',
         tokenModal: false,
         globalKeyword: '',
-        navGroups: [
-          { title: '概览', items: [{ route: 'dashboard', icon: 'grid', label: '监控总览' }] },
-          { title: '消息接入', items: [
-            { route: 'servers', icon: 'server', label: '服务连接 (Server)' },
-            { route: 'topics', icon: 'hash', label: 'Topic 管理' },
-            { route: 'cluster', icon: 'network', label: '集群管理' }] },
-          { title: '消息工厂', items: [
-            { route: 'templates', icon: 'file-text', label: '消息模板' },
-            { route: 'messaging', icon: 'send', label: '收发调试台' }] },
-          { title: '运维', items: [
-            { route: 'dlq', icon: 'inbox', label: '死信 DLQ' },
-            { route: 'settings', icon: 'settings', label: '系统设置' }] }
-        ],
+        loggedIn: false,
+        currentUser: null,
+        userMenuOpen: false,
+        loginForm: { username: '', password: '', loading: false },
+        users: [],
+        roles: [],
+        allMenus: [],
+        userRolesMap: {},
+        roleMenuMap: {},
+        navGroups: [],
         toasts: [], toastSeq: 0,
         ov: {}, dlqTotal: 0, dlqPreview: [],
         servers: [], srv: { keyword: '', protocol: '' },
@@ -132,7 +133,7 @@
           return r;
         } catch (e) {
           this.toast('error', e.message || String(e));
-          if (e.http === 401) this.openToken();
+          if (e.http === 401 && this.loggedIn) { this.logout(); return undefined; }
           return undefined;
         }
       },
@@ -180,13 +181,82 @@
         return c.bootstrapServers || c.serverUrls || c.host || (Object.keys(c).length ? JSON.stringify(c) : '—');
       },
 
+      /* ================= 认证 ================= */
+      async doLogin() {
+        if (!this.loginForm.username || !this.loginForm.password) { this.toast('error', '用户名和密码必填'); return; }
+        this.loginForm.loading = true;
+        try {
+          const r = await req('POST', '/public/login', { body: { username: this.loginForm.username, password: this.loginForm.password } });
+          localStorage.setItem(SESSION_KEY, r.token);
+          this.currentUser = r.userInfo;
+          this.loggedIn = true;
+          this.buildNavFromMenus(r.userInfo.menus || []);
+          await this.init();
+        } catch (e) {
+          this.toast('error', e.message || '登录失败');
+        } finally {
+          this.loginForm.loading = false;
+        }
+      },
+      async logout() {
+        try { await req('POST', '/public/logout'); } catch (e) {}
+        localStorage.removeItem(SESSION_KEY);
+        this.loggedIn = false;
+        this.currentUser = null;
+        this.loginForm = { username: '', password: '', loading: false };
+      },
+      async tryAutoLogin() {
+        const tk = localStorage.getItem(SESSION_KEY);
+        if (!tk) return false;
+        try {
+          const r = await req('GET', '/user/info');
+          this.currentUser = r;
+          this.loggedIn = true;
+          this.buildNavFromMenus(r.menus || []);
+          return true;
+        } catch (e) {
+          localStorage.removeItem(SESSION_KEY);
+          return false;
+        }
+      },
+      buildNavFromMenus(menus) {
+        const routeMap = { dashboard: 'dashboard', servers: 'servers', topics: 'topics', cluster: 'cluster',
+          templates: 'templates', messaging: 'messaging', dlq: 'dlq', settings: 'settings',
+          users: 'users', roles: 'roles', menus: 'menus' };
+        const iconMap = { dashboard: 'grid', servers: 'server', topics: 'hash', cluster: 'network',
+          templates: 'file-text', messaging: 'send', dlq: 'inbox', settings: 'settings',
+          users: 'key', roles: 'radio', menus: 'layers' };
+        const groupMap = {};
+        const walk = (list, parentPath) => {
+          (list || []).forEach(m => {
+            const route = routeMap[m.path];
+            if (m.menuType === 1 && route) {
+              const group = parentPath || '其他';
+              if (!groupMap[group]) groupMap[group] = [];
+              groupMap[group].push({ route, icon: iconMap[m.path] || 'grid', label: m.menuName });
+            }
+            if (m.children && m.children.length) walk(m.children, m.menuType === 0 ? m.menuName : parentPath);
+          });
+        };
+        walk(menus, null);
+        const order = ['概览', '消息接入', '消息工厂', '运维', '系统管理', '其他'];
+        const groups = [];
+        order.forEach(g => { if (groupMap[g]) groups.push({ title: g, items: groupMap[g] }); });
+        Object.keys(groupMap).forEach(g => { if (!order.includes(g)) groups.push({ title: g, items: groupMap[g] }); });
+        if (!groups.length) {
+          groups.push({ title: '概览', items: [{ route: 'dashboard', icon: 'grid', label: '监控总览' }] });
+        }
+        this.navGroups = groups;
+      },
+
       /* ================= 路由装载 ================= */
       async reload() { await this.loadRoute(this.route); },
       async loadRoute(r) {
         const fns = {
           dashboard: this.loadOverview, servers: this.loadServers, topics: this.loadTopics,
           cluster: this.loadCluster, templates: this.loadTemplates, messaging: this.loadMessaging,
-          dlq: this.loadDlq, settings: this.loadSettings
+          dlq: this.loadDlq, settings: this.loadSettings,
+          users: this.loadUsers, roles: this.loadRoles, menus: this.loadMenus
         };
         if (fns[r]) await fns[r].call(this);
       },
@@ -675,6 +745,112 @@
         });
       },
 
+      /* ================= 用户管理 ================= */
+      async loadUsers() {
+        await this.run(async () => {
+          const p = await req('GET', '/users');
+          this.users = p.items || [];
+        });
+      },
+      openUser(u) {
+        this.fm = {
+          kind: 'user', title: u ? '编辑用户 · ' + u.username : '新建用户', okLabel: '保存',
+          f: { id: u ? u.id : null, username: u ? u.username : '', nickname: u ? u.nickname : '',
+               email: u ? u.email || '' : '', phone: u ? u.phone || '' : '',
+               status: u ? u.status : 1, password: '', isNew: !u }
+        };
+      },
+      delUser(u) {
+        this.danger = {
+          open: true, title: '删除用户 ' + u.username + '？', resource: u.username, input: '', action: '删除用户',
+          desc: '此操作不可逆，该用户的角色关联也将被清除。',
+          onOk: async () => { await this.run(() => req('DELETE', '/users/' + u.id), '已删除'); await this.loadUsers(); }
+        };
+      },
+      async resetUserPwd(u) {
+        this.fm = {
+          kind: 'resetPwd', title: '重置密码 · ' + u.username, okLabel: '重置',
+          f: { id: u.id, password: '' }
+        };
+      },
+      async assignUserRoles(u) {
+        await this.run(async () => {
+          const roles = await req('GET', '/users/' + u.id + '/roles');
+          const selected = (roles || []).map(r => r.id);
+          this.userRolesMap = { userId: u.id, username: u.username, selected };
+          this.fm = { kind: 'assignRoles', title: '分配角色 · ' + u.username, okLabel: '保存', f: { userId: u.id } };
+          if (!this.roles.length) {
+            const p = await req('GET', '/roles');
+            this.roles = p.items || [];
+          }
+        });
+      },
+
+      /* ================= 角色管理 ================= */
+      async loadRoles() {
+        await this.run(async () => {
+          const p = await req('GET', '/roles');
+          this.roles = p.items || [];
+        });
+      },
+      openRole(r) {
+        this.fm = {
+          kind: 'role', title: r ? '编辑角色 · ' + r.roleName : '新建角色', okLabel: '保存',
+          f: { id: r ? r.id : null, roleCode: r ? r.roleCode : '', roleName: r ? r.roleName : '',
+               description: r ? r.description || '' : '', status: r ? r.status : 1, isNew: !r }
+        };
+      },
+      delRole(r) {
+        this.danger = {
+          open: true, title: '删除角色 ' + r.roleName + '？', resource: r.roleName, input: '', action: '删除角色',
+          desc: '此操作不可逆，关联的菜单分配也将被清除。',
+          onOk: async () => { await this.run(() => req('DELETE', '/roles/' + r.id), '已删除'); await this.loadRoles(); }
+        };
+      },
+      async assignRoleMenus(r) {
+        await this.run(async () => {
+          const menuIds = await req('GET', '/roles/' + r.id + '/menus');
+          this.roleMenuMap = { roleId: r.id, roleName: r.roleName, selected: menuIds || [] };
+          this.fm = { kind: 'assignMenus', title: '分配菜单 · ' + r.roleName, okLabel: '保存', f: { roleId: r.id } };
+          if (!this.allMenus.length) this.allMenus = await req('GET', '/menus');
+        });
+      },
+
+      /* ================= 菜单管理 ================= */
+      async loadMenus() {
+        await this.run(async () => { this.allMenus = await req('GET', '/menus'); });
+      },
+      openMenu(m) {
+        this.fm = {
+          kind: 'menu', title: m ? '编辑菜单 · ' + m.menuName : '新建菜单', okLabel: '保存',
+          f: { id: m ? m.id : null, parentId: m ? m.parentId : 0, menuName: m ? m.menuName : '',
+               menuType: m ? m.menuType : 1, path: m ? m.path || '' : '', icon: m ? m.icon || '' : '',
+               permCode: m ? m.permCode || '' : '', sortOrder: m ? m.sortOrder : 0,
+               status: m ? m.status : 1, isNew: !m }
+        };
+      },
+      delMenu(m) {
+        this.danger = {
+          open: true, title: '删除菜单 ' + m.menuName + '？', resource: m.menuName, input: '', action: '删除菜单',
+          desc: '此操作不可逆，子菜单也需先手动删除。',
+          onOk: async () => { await this.run(() => req('DELETE', '/menus/' + m.id), '已删除'); await this.loadMenus(); }
+        };
+      },
+      menuLabel(m) {
+        const typeMap = { 0: '目录', 1: '菜单' };
+        return (typeMap[m.menuType] || '未知') + ' · ' + m.menuName;
+      },
+      toggleMenuCheck(menuId) {
+        const idx = this.roleMenuMap.selected.indexOf(menuId);
+        if (idx >= 0) this.roleMenuMap.selected.splice(idx, 1);
+        else this.roleMenuMap.selected.push(menuId);
+      },
+      toggleRoleCheck(roleId) {
+        const idx = this.userRolesMap.selected.indexOf(roleId);
+        if (idx >= 0) this.userRolesMap.selected.splice(idx, 1);
+        else this.userRolesMap.selected.push(roleId);
+      },
+
       /* ================= 模态提交 ================= */
       async fmSubmit() {
         const k = this.fm.kind, f = this.fm.f;
@@ -792,6 +968,48 @@
             await this.reload();
             return;
           }
+          case 'user': {
+            if (f.isNew && !f.username) { this.toast('error', '用户名必填'); return; }
+            const body = { username: f.username, nickname: f.nickname, email: f.email, phone: f.phone, status: f.status };
+            if (f.isNew) { body.password = f.password || '123456'; }
+            if (f.id) body.id = f.id;
+            const saved = await this.run(() => req('POST', '/users', { body }), f.isNew ? '用户已创建' : '用户已更新');
+            if (saved) { this.fm.kind = ''; await this.loadUsers(); }
+            return;
+          }
+          case 'role': {
+            if (!f.roleCode) { this.toast('error', '角色编码必填'); return; }
+            const body = { roleCode: f.roleCode, roleName: f.roleName, description: f.description, status: f.status };
+            if (f.id) body.id = f.id;
+            const saved = await this.run(() => req('POST', '/roles', { body }), f.isNew ? '角色已创建' : '角色已更新');
+            if (saved) { this.fm.kind = ''; await this.loadRoles(); }
+            return;
+          }
+          case 'menu': {
+            if (!f.menuName) { this.toast('error', '菜单名称必填'); return; }
+            const body = { parentId: f.parentId || 0, menuName: f.menuName, menuType: f.menuType,
+                           path: f.path, icon: f.icon, permCode: f.permCode, sortOrder: f.sortOrder, status: f.status };
+            if (f.id) body.id = f.id;
+            const saved = await this.run(() => req('POST', '/menus', { body }), f.isNew ? '菜单已创建' : '菜单已更新');
+            if (saved) { this.fm.kind = ''; await this.loadMenus(); }
+            return;
+          }
+          case 'resetPwd': {
+            if (!f.password) { this.toast('error', '新密码必填'); return; }
+            await this.run(() => req('POST', '/users/' + f.id + '/reset-password', { body: { newPassword: f.password } }), '密码已重置');
+            this.fm.kind = '';
+            return;
+          }
+          case 'assignRoles': {
+            await this.run(() => req('POST', '/users/' + f.userId + '/roles', { body: this.userRolesMap.selected }), '角色已分配');
+            this.fm.kind = '';
+            return;
+          }
+          case 'assignMenus': {
+            await this.run(() => req('POST', '/roles/' + f.roleId + '/menus', { body: this.roleMenuMap.selected }), '菜单已分配');
+            this.fm.kind = '';
+            return;
+          }
         }
       },
       async dangerConfirm() {
@@ -804,7 +1022,7 @@
     created() {
       const r = (location.hash || '').replace(/^#\/?/, '');
       this.route = META[r] ? r : 'dashboard';
-      this.init();
+      this.tryAutoLogin().then(ok => { if (ok) this.init(); });
       window.addEventListener('hashchange', () => {
         const nr = (location.hash || '').replace(/^#\/?/, '');
         if (META[nr]) this.route = nr;

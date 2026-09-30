@@ -1,5 +1,6 @@
 package io.mngr.config;
 
+import io.mngr.sys.SessionManager;
 import io.mngr.web.AuthFilter;
 import io.mngr.ws.MngrWsHandler;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -17,15 +18,17 @@ public class WebConfig implements WebMvcConfigurer, WebSocketConfigurer {
 
     private final MngrProperties props;
     private final MngrWsHandler wsHandler;
+    private final SessionManager sessionManager;
 
-    public WebConfig(MngrProperties props, MngrWsHandler wsHandler) {
+    public WebConfig(MngrProperties props, MngrWsHandler wsHandler, SessionManager sessionManager) {
         this.props = props;
         this.wsHandler = wsHandler;
+        this.sessionManager = sessionManager;
     }
 
     @Bean
     public FilterRegistrationBean<AuthFilter> authFilter() {
-        FilterRegistrationBean<AuthFilter> b = new FilterRegistrationBean<>(new AuthFilter(props));
+        FilterRegistrationBean<AuthFilter> b = new FilterRegistrationBean<>(new AuthFilter(props, sessionManager));
         b.addUrlPatterns("/*");
         b.setOrder(1);
         return b;

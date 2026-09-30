@@ -27,7 +27,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,prometheus,shutdown
+  endpoint:
+    shutdown:
+      enabled: true
   metrics:
     tags:
       app: mqtt-mngr

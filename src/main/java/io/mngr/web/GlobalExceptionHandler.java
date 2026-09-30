@@ -23,6 +23,8 @@ public class GlobalExceptionHandler {
             case 8001 -> HttpStatus.SERVICE_UNAVAILABLE;
             case 7001, 7002 -> HttpStatus.FORBIDDEN;
             case 3001, 3002 -> HttpStatus.SERVICE_UNAVAILABLE;
+            case 401 -> HttpStatus.UNAUTHORIZED;
+            case 403 -> HttpStatus.FORBIDDEN;
             default -> HttpStatus.BAD_REQUEST;
         };
         if (e.getCode() == 9999) log.error("internal error", e);

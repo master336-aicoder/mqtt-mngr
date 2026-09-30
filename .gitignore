@@ -11,6 +11,9 @@ mail-server-api/src/main/resources/static/
 artifacts/
 
 # runtime data
+data/db/
+data/*.pid
+logs/
 mail-data/
 *.log
 .tmp-backend.log

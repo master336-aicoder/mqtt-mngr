@@ -21,6 +21,8 @@ public enum ErrorCode {
     ADMIN_DISABLED(7001, "管理操作未开启（allowAdminOps=false）"),
     CONFIRM_REQUIRED(7002, "危险操作需 confirm 回显资源名"),
     FEATURE_DISABLED(8001, "当前存储模式不支持该功能"),
+    UNAUTHORIZED(401, "认证失败"),
+    FORBIDDEN(403, "权限不足"),
     INTERNAL(9999, "内部错误");
 
     private final int code;

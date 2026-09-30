@@ -47,14 +47,41 @@
 </svg>
 
 <div id="app" class="app" v-cloak>
+
+  <!-- ============ 登录页 ============ -->
+  <div v-if="!loggedIn" class="login-page">
+    <div class="login-card">
+      <div class="login-card__head">
+        <span class="mark mark--lg"><svg class="icon icon--28"><use href="#i-layers"/></svg></span>
+        <h2>MQTT 消息管理台</h2>
+        <p class="muted">请登录以继续</p>
+      </div>
+      <div class="login-card__body">
+        <div class="field"><div class="field__label">用户名</div>
+          <input class="input" v-model="loginForm.username" placeholder="admin" @keyup.enter="doLogin" autofocus></div>
+        <div class="field"><div class="field__label">密码</div>
+          <input class="input" type="password" v-model="loginForm.password" placeholder="admin123" @keyup.enter="doLogin"></div>
+        <button class="btn btn--primary btn--md" style="width:100%;margin-top:12px" @click="doLogin" :disabled="loginForm.loading">
+          {{ loginForm.loading ? '登录中…' : '登 录' }}</button>
+      </div>
+    </div>
+  </div>
+
+  <template v-if="loggedIn">
   <header class="topbar">
     <div class="topbar__logo"><span class="mark"><svg class="icon"><use href="#i-layers"/></svg></span>MQTT 消息管理台 · Mngr</div>
     <div class="topbar__search"><span class="ico"><svg class="icon"><use href="#i-search"/></svg></span><input placeholder="搜索 Server、Topic、模板…" @keydown.enter="globalSearch" v-model="globalKeyword"></div>
     <div class="topbar__right">
       <button class="theme-toggle" @click="toggleTheme" :aria-label="'切换主题'"><svg class="icon"><use :href="theme==='dark'?'#i-sun':'#i-moon'"/></svg></button>
       <button class="icon-btn" aria-label="死信" @click="go('dlq')"><svg class="icon icon--20"><use href="#i-bell"/></svg><span class="badge" v-if="dlqTotal>0">{{ dlqTotal }}</span></button>
-      <button class="icon-btn" aria-label="令牌" @click="openToken()"><svg class="icon icon--20"><use href="#i-key"/></svg></button>
-      <button class="avatar" aria-label="当前用户" @click="go('settings')">A</button>
+      <div class="user-menu" style="position:relative;display:inline-block">
+        <button class="avatar" style="cursor:pointer" @click="userMenuOpen=!userMenuOpen">{{ currentUser ? currentUser.nickname.charAt(0) : 'A' }}</button>
+        <div v-if="userMenuOpen" class="user-dropdown" style="position:absolute;right:0;top:100%;margin-top:4px;background:var(--wb-bg-card);border:1px solid var(--wb-border);border-radius:var(--wb-radius-md);box-shadow:var(--wb-shadow-md);min-width:160px;z-index:100">
+          <div style="padding:10px 14px;border-bottom:1px solid var(--wb-border)"><b>{{ currentUser ? currentUser.nickname : '' }}</b><br><span class="muted" style="font-size:12px">{{ currentUser ? currentUser.username : '' }}</span></div>
+          <div style="padding:4px 0"><button class="btn btn--text" style="width:100%;text-align:left;padding:8px 14px" @click="go('users');userMenuOpen=false">用户管理</button></div>
+          <div style="padding:4px 0;border-top:1px solid var(--wb-border)"><button class="btn btn--text" style="width:100%;text-align:left;padding:8px 14px;color:var(--wb-color-danger)" @click="logout">退出登录</button></div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -525,12 +552,94 @@
         </div>
       </section>
 
+      <!-- ============ 用户管理 ============ -->
+      <section class="view active" v-show="route==='users'">
+        <div class="toolbar">
+          <span class="spacer"></span>
+          <button class="btn btn--primary btn--sm" @click="openUser(null)"><svg class="icon"><use href="#i-plus"/></svg>新建用户</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>ID</th><th>用户名</th><th>昵称</th><th>邮箱</th><th>手机</th><th>状态</th><th>创建时间</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="u in users" :key="u.id">
+              <td class="num">{{ u.id }}</td>
+              <td><b>{{ u.username }}</b></td>
+              <td>{{ u.nickname || '—' }}</td>
+              <td>{{ u.email || '—' }}</td>
+              <td>{{ u.phone || '—' }}</td>
+              <td><span class="tag" :class="u.status===1?'tag--success':'tag--danger'">{{ u.status===1?'启用':'禁用' }}</span></td>
+              <td class="muted">{{ fmt(u.createdAt) }}</td>
+              <td class="col-actions">
+                <button class="btn btn--text" @click="openUser(u)">编辑</button>
+                <button class="btn btn--text" @click="assignUserRoles(u)">分配角色</button>
+                <button class="btn btn--text" @click="resetUserPwd(u)">重置密码</button>
+                <button class="btn btn--text danger" @click="delUser(u)">删除</button>
+              </td>
+            </tr>
+            <tr v-if="!users.length"><td colspan="8" class="muted">暂无用户</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- ============ 角色管理 ============ -->
+      <section class="view active" v-show="route==='roles'">
+        <div class="toolbar">
+          <span class="spacer"></span>
+          <button class="btn btn--primary btn--sm" @click="openRole(null)"><svg class="icon"><use href="#i-plus"/></svg>新建角色</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>ID</th><th>角色编码</th><th>角色名称</th><th>描述</th><th>状态</th><th>创建时间</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="r in roles" :key="r.id">
+              <td class="num">{{ r.id }}</td>
+              <td class="mono">{{ r.roleCode }}</td>
+              <td><b>{{ r.roleName }}</b></td>
+              <td>{{ r.description || '—' }}</td>
+              <td><span class="tag" :class="r.status===1?'tag--success':'tag--danger'">{{ r.status===1?'启用':'禁用' }}</span></td>
+              <td class="muted">{{ fmt(r.createdAt) }}</td>
+              <td class="col-actions">
+                <button class="btn btn--text" @click="openRole(r)">编辑</button>
+                <button class="btn btn--text" @click="assignRoleMenus(r)">分配菜单</button>
+                <button class="btn btn--text danger" @click="delRole(r)">删除</button>
+              </td>
+            </tr>
+            <tr v-if="!roles.length"><td colspan="7" class="muted">暂无角色</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- ============ 菜单管理 ============ -->
+      <section class="view active" v-show="route==='menus'">
+        <div class="toolbar">
+          <span class="spacer"></span>
+          <button class="btn btn--primary btn--sm" @click="openMenu(null)"><svg class="icon"><use href="#i-plus"/></svg>新建菜单</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>ID</th><th>菜单名称</th><th>类型</th><th>路由/路径</th><th>图标</th><th>权限标识</th><th>排序</th><th>状态</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="m in allMenus" :key="m.id">
+              <td class="num">{{ m.id }}</td>
+              <td><b>{{ m.menuName }}</b></td>
+              <td><span class="tag" :class="m.menuType===0?'tag--info':'tag--primary'">{{ m.menuType===0?'目录':'菜单' }}</span></td>
+              <td class="mono">{{ m.path || '—' }}</td>
+              <td>{{ m.icon || '—' }}</td>
+              <td class="mono">{{ m.permCode || '—' }}</td>
+              <td class="num">{{ m.sortOrder }}</td>
+              <td><span class="tag" :class="m.status===1?'tag--success':'tag--danger'">{{ m.status===1?'启用':'禁用' }}</span></td>
+              <td class="col-actions">
+                <button class="btn btn--text" @click="openMenu(m)">编辑</button>
+                <button class="btn btn--text danger" @click="delMenu(m)">删除</button>
+              </td>
+            </tr>
+            <tr v-if="!allMenus.length"><td colspan="9" class="muted">暂无菜单</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
       </div>
     </main>
   </div>
+  </template>
 
   <!-- 通用表单模态 -->
-  <div class="modal-overlay" :class="{open:!!fm.kind}"><div class="modal" :class="{'modal--wide':fm.kind==='server'||fm.kind==='topic'||fm.kind==='sub'||fm.kind==='infer'}" role="dialog">
+  <div class="modal-overlay" :class="{open:!!fm.kind}"><div class="modal" :class="{'modal--wide':fm.kind==='server'||fm.kind==='topic'||fm.kind==='sub'||fm.kind==='infer'||fm.kind==='assignMenus'||fm.kind==='assignRoles'}" role="dialog">
     <div class="modal__head"><span>{{ fm.title }}</span></div>
     <div class="modal__body" style="max-height:70vh;overflow:auto">
 
@@ -635,6 +744,60 @@
       <template v-if="fm.kind==='token'">
         <div class="field"><div class="field__label">X-Mngr-Token（仅存浏览器 localStorage）</div><input class="input mono" v-model="fm.f.token" type="password"></div>
         <div class="field__hint">后端 mngr.auth.token 为空时可不填。</div>
+      </template>
+
+      <template v-if="fm.kind==='user'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> 用户名</div><input class="input" v-model="fm.f.username" :disabled="!fm.f.isNew"></div>
+          <div class="field" v-if="fm.f.isNew"><div class="field__label">初始密码（留空默认 123456）</div><input class="input" type="password" v-model="fm.f.password"></div>
+          <div class="field"><div class="field__label">昵称</div><input class="input" v-model="fm.f.nickname"></div>
+          <div class="field"><div class="field__label">邮箱</div><input class="input" v-model="fm.f.email"></div>
+          <div class="field"><div class="field__label">手机</div><input class="input" v-model="fm.f.phone"></div>
+          <div class="field"><div class="field__label">状态</div><select class="select" style="width:100%" v-model.number="fm.f.status"><option :value="1">启用</option><option :value="0">禁用</option></select></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='role'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> 角色编码</div><input class="input mono" v-model="fm.f.roleCode" placeholder="example_role"></div>
+          <div class="field"><div class="field__label"><span class="req">*</span> 角色名称</div><input class="input" v-model="fm.f.roleName"></div>
+          <div class="field field--full"><div class="field__label">描述</div><input class="input" v-model="fm.f.description"></div>
+          <div class="field"><div class="field__label">状态</div><select class="select" style="width:100%" v-model.number="fm.f.status"><option :value="1">启用</option><option :value="0">禁用</option></select></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='menu'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> 菜单名称</div><input class="input" v-model="fm.f.menuName"></div>
+          <div class="field"><div class="field__label">类型</div><select class="select" style="width:100%" v-model.number="fm.f.menuType"><option :value="0">目录</option><option :value="1">菜单</option></select></div>
+          <div class="field"><div class="field__label">父级 ID（0=顶级）</div><input class="input" type="number" v-model.number="fm.f.parentId"></div>
+          <div class="field"><div class="field__label">路由路径</div><input class="input mono" v-model="fm.f.path" placeholder="dashboard"></div>
+          <div class="field"><div class="field__label">图标</div><input class="input" v-model="fm.f.icon" placeholder="grid"></div>
+          <div class="field"><div class="field__label">权限标识</div><input class="input mono" v-model="fm.f.permCode"></div>
+          <div class="field"><div class="field__label">排序</div><input class="input" type="number" v-model.number="fm.f.sortOrder"></div>
+          <div class="field"><div class="field__label">状态</div><select class="select" style="width:100%" v-model.number="fm.f.status"><option :value="1">启用</option><option :value="0">禁用</option></select></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='resetPwd'">
+        <div class="field"><div class="field__label"><span class="req">*</span> 新密码</div><input class="input" type="password" v-model="fm.f.password" placeholder="输入新密码"></div>
+      </template>
+
+      <template v-if="fm.kind==='assignRoles'">
+        <div class="banner banner--info" style="margin-bottom:12px"><svg class="icon"><use href="#i-key"/></svg>为用户 <b>{{ userRolesMap.username }}</b> 分配角色</div>
+        <div v-for="r in roles" :key="r.id" style="padding:8px 0;border-bottom:1px solid var(--wb-border)">
+          <label class="check" style="cursor:pointer"><input type="checkbox" :checked="userRolesMap.selected.includes(r.id)" @change="toggleRoleCheck(r.id)"> <b>{{ r.roleName }}</b> <span class="muted">({{ r.roleCode }})</span></label>
+          <div class="muted" style="font-size:12px;margin-top:2px" v-if="r.description">{{ r.description }}</div>
+        </div>
+        <div class="muted" style="padding:12px 0" v-if="!roles.length">暂无角色</div>
+      </template>
+
+      <template v-if="fm.kind==='assignMenus'">
+        <div class="banner banner--info" style="margin-bottom:12px"><svg class="icon"><use href="#i-layers"/></svg>为角色 <b>{{ roleMenuMap.roleName }}</b> 分配菜单权限</div>
+        <div v-for="m in allMenus" :key="m.id" :style="{padding:'8px 0',borderBottom:'1px solid var(--wb-border)',paddingLeft:(m.parentId?'24px':'0')}">
+          <label class="check" style="cursor:pointer"><input type="checkbox" :checked="roleMenuMap.selected.includes(m.id)" @change="toggleMenuCheck(m.id)"> <b>{{ m.menuName }}</b> <span class="muted">({{ m.menuType===0?'目录':'菜单' }} · {{ m.path || '—' }})</span></label>
+        </div>
+        <div class="muted" style="padding:12px 0" v-if="!allMenus.length">暂无菜单</div>
       </template>
     </div>
     <div class="modal__foot">
