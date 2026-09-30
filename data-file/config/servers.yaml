@@ -1,0 +1,12 @@
+- id: kafka-41615
+  name: fk
+  protocol: KAFKA
+  enabled: true
+  connMode: MANUAL
+  conn:
+    bootstrapServers: h:9092
+  credEnc: BJJx3cdgvJgFkr3ZWI2TAHGGiRJwhjlfTDh5o9Oo5cq0+Lx5DpG7uzw9KVw5EZDRHyVr
+  mgmt: {}
+  tags: null
+  createdAt: 1790738241
+  updatedAt: 1790738241

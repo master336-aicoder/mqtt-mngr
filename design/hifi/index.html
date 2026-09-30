@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mqtt-mngr 高保真原型 · Kafka & EMQX 统一消息管理台</title>
+<style>
+/* ===================== 令牌层（UI设计规范 v1.3） ===================== */
+:root,[data-theme="light"]{
+  --wb-color-primary:#3B82F6;--wb-color-primary-hover:#2563EB;--wb-color-primary-active:#1D4ED8;--wb-color-primary-bg:#EFF6FF;
+  --wb-color-accent:#0EA5E9;--wb-color-success:#10B981;--wb-color-warning:#F59E0B;--wb-color-danger:#EF4444;--wb-color-info:#64748B;
+  --wb-color-bg:#F8FAFC;--wb-color-surface:#FFFFFF;
+  --wb-glass-bg:rgba(255,255,255,.52);--wb-glass-border:rgba(255,255,255,.78);--wb-glass-blur:24px;--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.45);
+  --wb-color-border:rgba(15,23,42,.08);--wb-color-border-hover:rgba(15,23,42,.16);
+  --wb-color-text:#0F172A;--wb-color-text-2:#475569;--wb-color-text-3:#64748B;--wb-color-text-disabled:#94A3B8;--wb-color-striping:rgba(15,23,42,.03);
+  --wb-font-family:system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  --wb-font-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --wb-radius-sm:8px;--wb-radius-md:12px;--wb-radius-lg:16px;--wb-radius-xl:24px;--wb-radius-full:999px;
+  --wb-shadow-sm:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);
+  --wb-shadow-md:0 4px 16px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04);
+  --wb-shadow-lg:0 16px 48px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.06);
+  --wb-shadow-glow:0 8px 32px rgba(59,130,246,.35);
+  --wb-z-dropdown:1000;--wb-z-sticky:1100;--wb-z-drawer:1200;--wb-z-modal:1300;--wb-z-message:1400;
+  --wb-motion-fast:120ms;--wb-motion-base:200ms;--wb-motion-slow:320ms;
+  --wb-motion-ease:cubic-bezier(.32,.72,0,1);--wb-motion-spring:cubic-bezier(.34,1.56,.64,1);
+  --wb-gradient:linear-gradient(135deg,#3B82F6 0%,#0EA5E9 100%);
+}
+[data-theme="dark"]{
+  --wb-color-primary:#60A5FA;--wb-color-primary-hover:#93C5FD;--wb-color-primary-active:#3B82F6;--wb-color-primary-bg:rgba(59,130,246,.18);
+  --wb-color-accent:#38BDF8;--wb-color-success:#34D399;--wb-color-warning:#FBBF24;--wb-color-danger:#F87171;--wb-color-info:#94A3B8;
+  --wb-color-bg:#0B1120;--wb-color-surface:#111827;
+  --wb-glass-bg:rgba(30,41,59,.42);--wb-glass-border:rgba(255,255,255,.15);--wb-glass-blur:24px;--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.10);
+  --wb-color-border:rgba(255,255,255,.10);--wb-color-border-hover:rgba(255,255,255,.20);
+  --wb-color-text:#F1F5F9;--wb-color-text-2:#CBD5E1;--wb-color-text-3:#94A3B8;--wb-color-text-disabled:#64748B;--wb-color-striping:rgba(255,255,255,.04);
+  --wb-shadow-sm:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.4);
+  --wb-shadow-md:0 4px 16px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3);
+  --wb-shadow-lg:0 16px 48px rgba(0,0,0,.55),0 4px 16px rgba(0,0,0,.4);
+  --wb-shadow-glow:0 8px 32px rgba(96,165,250,.4);
+  --wb-gradient:linear-gradient(135deg,#60A5FA 0%,#38BDF8 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--wb-font-family);font-size:14px;line-height:22px;color:var(--wb-color-text);-webkit-font-smoothing:antialiased;
+  background:radial-gradient(circle at 0% 0%,rgba(59,130,246,.16),transparent 42%),radial-gradient(circle at 100% 0%,rgba(14,165,233,.16),transparent 42%),radial-gradient(circle at 50% 100%,rgba(125,211,252,.12),transparent 55%),var(--wb-color-bg);
+  background-attachment:fixed;transition:background var(--wb-motion-slow) var(--wb-motion-ease),color var(--wb-motion-slow) var(--wb-motion-ease)}
+[data-theme="dark"] body{background:radial-gradient(circle at 0% 0%,rgba(59,130,246,.27),transparent 45%),radial-gradient(circle at 100% 0%,rgba(14,165,233,.26),transparent 45%),radial-gradient(circle at 50% 100%,rgba(125,211,252,.16),transparent 55%),var(--wb-color-bg);background-attachment:fixed}
+a{color:var(--wb-color-primary);text-decoration:none}
+:focus-visible{outline:2px solid var(--wb-color-primary);outline-offset:2px;border-radius:4px}
+.icon{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block}
+.icon--20{width:20px;height:20px}.icon--24{width:24px;height:24px}.icon--14{width:14px;height:14px}
+.mono{font-family:var(--wb-font-mono);font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--wb-color-text-3)}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* 顶栏 · 强玻璃 */
+.topbar{height:60px;display:flex;align-items:center;gap:16px;padding:0 24px;flex-shrink:0;z-index:var(--wb-z-sticky);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));border-bottom:1px solid var(--wb-color-border)}
+.topbar__logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.topbar__logo .mark{width:28px;height:28px;border-radius:8px;background:var(--wb-gradient);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--wb-shadow-glow)}
+.topbar__search{flex:1;max-width:360px;position:relative}
+.topbar__search input{width:100%;height:34px;padding:0 12px 0 34px;font:inherit;font-size:13px;color:var(--wb-color-text);background:var(--wb-color-striping);border:1px solid transparent;border-radius:var(--wb-radius-full);transition:all var(--wb-motion-fast)}
+.topbar__search input:focus{outline:none;border-color:var(--wb-color-primary);background:var(--wb-color-surface);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+.topbar__search .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--wb-color-text-3)}
+.topbar__right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;border-radius:var(--wb-radius-sm);cursor:pointer;color:var(--wb-color-text-2);position:relative;transition:background var(--wb-motion-fast)}
+.icon-btn:hover{background:var(--wb-color-striping);color:var(--wb-color-text)}
+.icon-btn .badge{position:absolute;top:3px;right:3px;min-width:16px;height:16px;padding:0 4px;font-size:10px;font-weight:600;line-height:16px;text-align:center;color:#fff;background:var(--wb-color-danger);border-radius:var(--wb-radius-full)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--wb-color-primary-bg);color:var(--wb-color-primary);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;cursor:pointer;border:none}
+.theme-toggle{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--wb-color-border);background:var(--wb-color-surface);border-radius:var(--wb-radius-sm);cursor:pointer;color:var(--wb-color-text-2)}
+.theme-toggle:hover{border-color:var(--wb-color-border-hover);color:var(--wb-color-text)}
+
+.body{display:flex;flex:1;overflow:hidden}
+/* 侧栏 · 标准玻璃 */
+.sidebar{width:228px;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));border-right:1px solid var(--wb-color-border)}
+.sidebar__group-title{padding:16px 16px 6px;font-size:11px;color:var(--wb-color-text-3);letter-spacing:.06em}
+.sidebar__item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:13px;color:var(--wb-color-text-2);cursor:pointer;border-left:2px solid transparent;transition:all var(--wb-motion-fast)}
+.sidebar__item:hover{background:var(--wb-color-striping);color:var(--wb-color-text)}
+.sidebar__item.active{color:var(--wb-color-primary);background:var(--wb-color-primary-bg);border-left-color:var(--wb-color-primary);font-weight:600}
+.sidebar__item.active .icon{color:var(--wb-color-primary)}
+
+.content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.content__head{padding:16px 24px 0}
+.breadcrumb{font-size:13px;color:var(--wb-color-text-3)}
+.breadcrumb span{color:var(--wb-color-text-2)}
+.content__title{font-size:20px;font-weight:600;letter-spacing:-.014em;padding:8px 24px 4px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.content__desc{padding:0 24px 12px;font-size:13px;color:var(--wb-color-text-3)}
+.content__body{padding:0 24px 24px;flex:1}
+.view{display:none}.view.active{display:block;animation:fadeUp var(--wb-motion-slow) var(--wb-motion-ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* 统计卡 · 玻璃 */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.stat-card{padding:18px;border-radius:var(--wb-radius-md);background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md);transition:transform var(--wb-motion-base)}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-card__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.stat-card__label{font-size:12px;color:var(--wb-color-text-3)}
+.stat-card__icon{width:32px;height:32px;border-radius:9px;background:var(--wb-gradient);color:#fff;display:flex;align-items:center;justify-content:center}
+.stat-card__value{font-size:24px;font-weight:600;line-height:1.2}
+.stat-card__trend{font-size:12px;margin-top:4px;color:var(--wb-color-text-3)}
+.stat-card--accent .stat-card__icon{background:linear-gradient(135deg,#10B981,#14B8A6)}
+.stat-card--warn .stat-card__icon{background:linear-gradient(135deg,#F59E0B,#F97316)}
+.stat-card--danger .stat-card__icon{background:linear-gradient(135deg,#EF4444,#EC4899)}
+
+/* 通用面板 */
+.panel{background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-md);margin-bottom:16px}
+.panel__head{padding:14px 18px;border-bottom:1px solid var(--wb-color-border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel__title{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.panel__body{padding:18px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:14px;font-weight:500;line-height:1;border-radius:var(--wb-radius-sm);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all var(--wb-motion-base)}
+.btn--md{height:34px;padding:0 16px}.btn--sm{height:30px;padding:0 12px;font-size:13px}.btn--lg{height:40px;padding:0 20px}
+.btn--primary{background:var(--wb-gradient);color:#fff;box-shadow:0 4px 14px rgba(59,130,246,.30)}
+.btn--primary:hover{box-shadow:0 6px 22px rgba(59,130,246,.45);transform:translateY(-1px)}
+.btn--default{background:var(--wb-color-surface);border-color:var(--wb-color-border);color:var(--wb-color-text)}
+.btn--default:hover{border-color:var(--wb-color-border-hover);background:var(--wb-color-striping)}
+.btn--text{color:var(--wb-color-primary);padding:0 8px;height:34px;background:none;border:none}
+.btn--text:hover{background:var(--wb-color-primary-bg)}
+.btn--text.danger{color:var(--wb-color-danger)}
+.btn--danger{background:var(--wb-color-danger);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+
+/* 工具栏 */
+.toolbar{padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-md) var(--wb-radius-md) 0 0;border-bottom:none}
+.toolbar .spacer{flex:1}
+.input,.select{height:34px;padding:0 12px;font:inherit;font-size:13px;color:var(--wb-color-text);background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-sm);transition:all var(--wb-motion-fast)}
+.input:focus,.select:focus{outline:none;border-color:var(--wb-color-primary);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+.input::placeholder{color:var(--wb-color-text-disabled)}
+
+/* 表格 */
+.table-wrap{background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:0 0 var(--wb-radius-md) var(--wb-radius-md);overflow:hidden}
+.table-wrap--solo{border-radius:var(--wb-radius-md)}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+table.tbl thead th{background:var(--wb-color-striping);font-weight:600;text-align:left;padding:11px 16px;border-bottom:1px solid var(--wb-color-border);white-space:nowrap;font-size:12px;letter-spacing:.02em;color:var(--wb-color-text-2)}
+table.tbl tbody td{padding:13px 16px;border-bottom:1px solid var(--wb-color-border);color:var(--wb-color-text-2);vertical-align:middle}
+table.tbl tbody tr:last-child td{border-bottom:none}
+table.tbl tbody tr{transition:background var(--wb-motion-fast)}
+table.tbl tbody tr:hover{background:var(--wb-color-striping)}
+table.tbl .col-actions{text-align:right;white-space:nowrap}
+table.tbl .col-actions .btn--text{padding:0 6px;height:auto;font-size:13px}
+.check{display:inline-flex;align-items:center;cursor:pointer}
+.check input{width:16px;height:16px;accent-color:var(--wb-color-primary)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--wb-color-border);font-size:12px;color:var(--wb-color-text-3)}
+.pagination__pages{display:flex;align-items:center;gap:4px}
+.page-btn{min-width:30px;height:30px;border:1px solid var(--wb-color-border);background:var(--wb-color-surface);border-radius:var(--wb-radius-sm);cursor:pointer;font-size:12px;color:var(--wb-color-text-2);display:inline-flex;align-items:center;justify-content:center}
+.page-btn:hover{border-color:var(--wb-color-primary);color:var(--wb-color-primary)}
+.page-btn.active{background:var(--wb-gradient);color:#fff;border-color:transparent}
+
+/* 标签 / 状态 */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:12px;border-radius:var(--wb-radius-sm);line-height:18px}
+.tag--success{color:var(--wb-color-success);background:rgba(16,185,129,.12)}
+.tag--warning{color:var(--wb-color-warning);background:rgba(245,158,11,.12)}
+.tag--danger{color:var(--wb-color-danger);background:rgba(239,68,68,.12)}
+.tag--info{color:var(--wb-color-info);background:rgba(100,116,139,.12)}
+.tag--primary{color:var(--wb-color-primary);background:var(--wb-color-primary-bg)}
+.tag--accent{color:var(--wb-color-accent);background:rgba(14,165,233,.12)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot--on{background:var(--wb-color-success)}.dot--off{background:var(--wb-color-text-disabled)}
+.dot--deg{background:var(--wb-color-warning)}.dot--down{background:var(--wb-color-danger)}
+.dot--pulse{background:var(--wb-color-success);box-shadow:0 0 0 0 rgba(16,185,129,.5);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}70%{box-shadow:0 0 0 6px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--wb-color-border);margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:9px 14px;font-size:13px;color:var(--wb-color-text-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all var(--wb-motion-fast);border-radius:var(--wb-radius-sm) var(--wb-radius-sm) 0 0}
+.tab:hover{color:var(--wb-color-text);background:var(--wb-color-striping)}
+.tab.active{color:var(--wb-color-primary);border-bottom-color:var(--wb-color-primary);font-weight:600}
+
+/* Server 卡片 */
+.server-card{position:relative;padding:18px;border-radius:var(--wb-radius-md);background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md);transition:transform var(--wb-motion-base)}
+.server-card:hover{transform:translateY(-2px)}
+.server-card__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.server-card__name{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.server-card__proto{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600}
+.proto-k{background:linear-gradient(135deg,#3B82F6,#1D4ED8)}
+.proto-m{background:linear-gradient(135deg,#0EA5E9,#14B8A6)}
+.server-card__meta{font-size:12px;color:var(--wb-color-text-3);margin-bottom:14px;line-height:1.7}
+
+/* JSON 查看 */
+.json{background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-sm);padding:14px;font-family:var(--wb-font-mono);font-size:12.5px;line-height:1.7;color:var(--wb-color-text-2);overflow:auto;white-space:pre}
+[data-theme="dark"] .json{background:rgba(2,6,23,.35)}
+.j-key{color:var(--wb-color-primary)}.j-str{color:var(--wb-color-success)}.j-num{color:var(--wb-color-warning)}.j-bool{color:var(--wb-color-accent)}
+
+/* 调试台 */
+.split{display:grid;grid-template-columns:480px 1fr;gap:16px;align-items:start}
+.field{margin-bottom:14px}
+.field__label{font-size:13px;font-weight:500;margin-bottom:6px;display:flex;align-items:center;gap:4px}
+.field__label .req{color:var(--wb-color-danger)}
+.field .input,.field .select,.field textarea{width:100%}
+.field textarea{min-height:180px;padding:12px;font-family:var(--wb-font-mono);font-size:12.5px;line-height:1.6;resize:vertical}
+.field__hint{font-size:12px;color:var(--wb-color-text-3);margin-top:6px}
+.seg{display:inline-flex;background:var(--wb-color-striping);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-sm);padding:2px}
+.seg button{border:none;background:none;font:inherit;font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;color:var(--wb-color-text-2)}
+.seg button.on{background:var(--wb-color-surface);color:var(--wb-color-primary);font-weight:600;box-shadow:var(--wb-shadow-sm)}
+
+/* 实时流 */
+.feed{max-height:460px;overflow-y:auto}
+.feed-item{border-bottom:1px solid var(--wb-color-border);padding:12px 16px;transition:background var(--wb-motion-fast);cursor:pointer}
+.feed-item:hover{background:var(--wb-color-striping)}
+.feed-item__top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.feed-item__topic{font-family:var(--wb-font-mono);font-size:12.5px;color:var(--wb-color-text)}
+.feed-item__ts{font-size:11px;color:var(--wb-color-text-3);margin-left:auto}
+.feed-item__body{display:none;padding-top:8px}
+.feed-item.open .feed-item__body{display:block}
+
+/* 匹配得分条 */
+.score-row{display:grid;grid-template-columns:180px 1fr 56px;align-items:center;gap:12px;margin-bottom:12px;font-size:13px}
+.progress{height:8px;background:var(--wb-color-striping);border-radius:var(--wb-radius-full);overflow:hidden}
+.progress>span{display:block;height:100%;border-radius:var(--wb-radius-full);background:var(--wb-gradient)}
+
+/* 模板字段表 */
+.field-tree td:first-child{font-family:var(--wb-font-mono)}
+.indent-1{padding-left:32px!important}.indent-2{padding-left:52px!important}
+.vline-danger{box-shadow:inset 2px 0 0 var(--wb-color-danger)}
+.vline-warn{box-shadow:inset 2px 0 0 var(--wb-color-warning)}
+
+/* 空态 */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:48px 16px;text-align:center;color:var(--wb-color-text-3)}
+.empty .icon{width:32px;height:32px;stroke-width:1.5;color:var(--wb-color-text-disabled)}
+
+/* 详情行 */
+.detail-row{display:flex;padding:11px 0;border-bottom:1px solid var(--wb-color-border)}
+.detail-row .label{width:110px;color:var(--wb-color-text-3);font-size:13px;flex-shrink:0}
+.detail-row .value{font-size:13px;color:var(--wb-color-text)}
+
+/* Toast */
+.toast-stack{position:fixed;top:16px;right:16px;z-index:var(--wb-z-message);display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;min-width:240px;padding:11px 16px;background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-md);box-shadow:var(--wb-shadow-lg);font-size:13px;animation:slideIn var(--wb-motion-slow) var(--wb-motion-ease)}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast__icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.toast--success .toast__icon{background:var(--wb-color-success)}
+.toast--error .toast__icon{background:var(--wb-color-danger)}
+.toast--info .toast__icon{background:var(--wb-color-info)}
+
+/* 危险对话框 */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);z-index:calc(var(--wb-z-modal) - 1);display:none;align-items:center;justify-content:center}
+[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.6)}
+.modal-overlay.open{display:flex;animation:fade var(--wb-motion-base) var(--wb-motion-ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{width:480px;max-width:92vw;border-radius:var(--wb-radius-lg);overflow:hidden;display:flex;flex-direction:column;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-lg)}
+.modal__head{display:flex;align-items:center;gap:10px;padding:18px 20px 6px;font-size:16px;font-weight:600}
+.modal__head .warn-ico{width:34px;height:34px;border-radius:10px;background:rgba(239,68,68,.14);color:var(--wb-color-danger);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal__body{padding:8px 20px 20px;font-size:13px;color:var(--wb-color-text-2);line-height:1.7}
+.modal__foot{display:flex;gap:8px;justify-content:flex-end;padding:14px 20px;border-top:1px solid var(--wb-color-border)}
+.modal__body .box{margin-top:12px}
+
+.banner{display:flex;align-items:center;gap:10px;padding:10px 16px;border-radius:var(--wb-radius-md);font-size:12.5px;margin-bottom:16px}
+.banner--info{background:var(--wb-color-primary-bg);border:1px solid rgba(59,130,246,.28);color:var(--wb-color-text-2)}
+.banner--warn{background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.30)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01M12 6h2M12 18h2"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+  <symbol id="i-network" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4M12 12H5v4M12 12h7v4"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M4.9 19.1C2.5 16.7 2.5 12.8 4.9 9.9M7.8 16.2c-1.6-1.6-1.6-4.8 0-7.1M16.2 7.8c1.6 1.6 1.6 4.8 0 7.1M19.1 4.9c2.4 2.4 2.4 6.3 0 9.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-chevleft" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevright" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" fill="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1" fill="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="none"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></symbol>
+  <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="m3 21 12-12M15 9l-6-6 3-3 6 6M9 15l-6-6 3-3 6 6"/><path d="M18 14h3v3M14 6h3v3"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="topbar">
+    <div class="topbar__logo"><span class="mark"><svg class="icon"><use href="#i-layers"/></svg></span>MQTT 消息管理台 · Mngr</div>
+    <div class="topbar__search"><span class="ico"><svg class="icon"><use href="#i-search"/></svg></span><input placeholder="搜索 Server、Topic、模板…（Ctrl+K）"></div>
+    <div class="topbar__right">
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题"><svg class="icon"><use href="#i-moon"/></svg></button>
+      <button class="icon-btn" aria-label="通知"><svg class="icon icon--20"><use href="#i-bell"/></svg><span class="badge">3</span></button>
+      <button class="icon-btn" aria-label="帮助"><svg class="icon icon--20"><use href="#i-help"/></svg></button>
+      <button class="avatar" aria-label="当前用户">D</button>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sidebar__group-title">概览</div>
+      <div class="sidebar__item active" data-route="dashboard"><svg class="icon"><use href="#i-grid"/></svg>监控总览</div>
+      <div class="sidebar__group-title">消息接入</div>
+      <div class="sidebar__item" data-route="servers"><svg class="icon"><use href="#i-server"/></svg>服务连接 (Server)</div>
+      <div class="sidebar__item" data-route="topics"><svg class="icon"><use href="#i-hash"/></svg>Topic 管理</div>
+      <div class="sidebar__item" data-route="cluster"><svg class="icon"><use href="#i-network"/></svg>集群管理</div>
+      <div class="sidebar__group-title">消息工厂</div>
+      <div class="sidebar__item" data-route="templates"><svg class="icon"><use href="#i-file-text"/></svg>消息模板</div>
+      <div class="sidebar__item" data-route="messaging"><svg class="icon"><use href="#i-send"/></svg>收发调试台</div>
+      <div class="sidebar__group-title">运维</div>
+      <div class="sidebar__item" data-route="dlq"><svg class="icon"><use href="#i-inbox"/></svg>死信 DLQ<span style="margin-left:auto"><span class="tag tag--danger num">12</span></span></div>
+      <div class="sidebar__item" data-route="settings"><svg class="icon"><use href="#i-settings"/></svg>系统设置</div>
+    </aside>
+
+    <main class="content">
+      <div class="content__head"><nav class="breadcrumb" id="breadcrumb">概览 <span>/</span> <span>监控总览</span></nav></div>
+      <div class="content__title"><span id="viewTitle">监控总览</span>
+        <span style="display:flex;gap:8px"><button class="btn btn--default btn--md"><svg class="icon"><use href="#i-download"/></svg>导出报告</button><button class="btn btn--primary btn--md"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button></span>
+      </div>
+      <div class="content__desc" id="viewDesc">实时掌握 Server 连接健康、吞吐趋势与消息模板归类分布。</div>
+      <div class="content__body">
+
+      <!-- ============ 监控总览 ============ -->
+      <section class="view active" id="v-dashboard">
+        <div class="stats">
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">在线 Server</span><span class="stat-card__icon"><svg class="icon"><use href="#i-server"/></svg></span></div><div class="stat-card__value">4/6</div><div class="stat-card__trend">2 个连接异常</div></div>
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">发布 TPS</span><span class="stat-card__icon"><svg class="icon"><use href="#i-send"/></svg></span></div><div class="stat-card__value">8,420</div><div class="stat-card__trend">近 5 分钟均值</div></div>
+          <div class="stat-card stat-card--warn"><div class="stat-card__top"><span class="stat-card__label">未消化 Lag</span><span class="stat-card__icon"><svg class="icon"><use href="#i-clock"/></svg></span></div><div class="stat-card__value">243K</div><div class="stat-card__trend">order-paid · 消费组 billing</div></div>
+          <div class="stat-card stat-card--danger"><div class="stat-card__top"><span class="stat-card__label">死信 DLQ</span><span class="stat-card__icon"><svg class="icon"><use href="#i-warn"/></svg></span></div><div class="stat-card__value">12</div><div class="stat-card__trend">今日新增 5</div></div>
+        </div>
+
+        <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-server"/></svg>Server 健康</span><span class="muted" style="font-size:12px">更新于 20 秒前</span></div>
+          <div class="panel__body grid-3">
+            <div class="server-card"><div class="server-card__head"><span class="server-card__name"><span class="server-card__proto proto-k">K</span>kafka-prod</span><span class="tag tag--success"><span class="dot dot--pulse"></span>已连接</span></div><div class="server-card__meta">3 broker · v3.7.2 · SASL_SSL<br>发布 6.2k/s · 消费 5.8k/s · 重连 0</div><div class="progress"><span style="width:74%"></span></div></div>
+            <div class="server-card"><div class="server-card__head"><span class="server-card__name"><span class="server-card__proto proto-m">M</span>emqx-prod</span><span class="tag tag--warning"><span class="dot dot--deg"></span>降级</span></div><div class="server-card__meta">MQTT 5.0 · 2 节点 · 重连 2 次<br>发布 2.1k/s · 订阅 1.4k/s</div><div class="progress"><span style="width:41%"></span></div></div>
+            <div class="server-card"><div class="server-card__head"><span class="server-card__name"><span class="server-card__proto proto-m">M</span>emqx-staging</span><span class="tag tag--danger"><span class="dot dot--down"></span>离线</span></div><div class="server-card__meta">未连接 · 上次心跳超时<br>连续失败 6 次 · 下次重试 24s</div><div class="progress"><span style="width:8%;background:var(--wb-color-danger)"></span></div></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-chart"/></svg>吞吐趋势（发布 / 消费）</span><span class="tag tag--primary">1h</span></div>
+            <div class="panel__body">
+              <svg viewBox="0 0 560 160" style="width:100%;height:160px" fill="none" stroke-width="2">
+                <polyline points="0,120 60,110 120,95 180,105 240,70 300,80 360,55 420,60 480,42 560,50" stroke="#3B82F6"/>
+                <polyline points="0,132 60,128 120,118 180,124 240,102 300,110 360,90 420,96 480,80 560,86" stroke="#10B981"/>
+              </svg>
+              <div style="display:flex;gap:16px;font-size:12px;color:var(--wb-color-text-3);margin-top:8px"><span><span class="dot dot--on" style="background:#3B82F6"></span> 发布</span><span><span class="dot dot--on" style="background:#10B981"></span> 消费</span></div>
+            </div>
+          </div>
+          <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-layers"/></svg>模板归类分布</span></div>
+            <div class="panel__body" style="display:flex;align-items:center;gap:24px">
+              <svg viewBox="0 0 42 42" style="width:130px;height:130px">
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="var(--wb-color-striping)" stroke-width="6"/>
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3B82F6" stroke-width="6" stroke-dasharray="45 55" stroke-dashoffset="25"/>
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#0EA5E9" stroke-width="6" stroke-dasharray="25 75" stroke-dashoffset="-20"/>
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#10B981" stroke-width="6" stroke-dasharray="15 85" stroke-dashoffset="-45"/>
+                <circle cx="21" cy="21" r="15.9" fill="none" stroke="#F59E0B" stroke-width="6" stroke-dasharray="9 91" stroke-dashoffset="-60"/>
+              </svg>
+              <div style="flex:1;font-size:13px">
+                <div class="feed-item__top"><span class="dot dot--on" style="background:#3B82F6"></span>设备事件 tpl-device-event<span class="num muted" style="margin-left:auto">45%</span></div>
+                <div class="feed-item__top"><span class="dot dot--on" style="background:#0EA5E9"></span>订单 tpl-order<span class="num muted" style="margin-left:auto">25%</span></div>
+                <div class="feed-item__top"><span class="dot dot--on" style="background:#10B981"></span>退款 tpl-order-refund<span class="num muted" style="margin-left:auto">15%</span></div>
+                <div class="feed-item__top"><span class="dot dot--off"></span>未归类<span class="num muted" style="margin-left:auto">9%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-warn"/></svg>最近事件 / 死信</span><button class="btn btn--text" onclick="go('dlq')">查看全部</button></div>
+          <div class="table-wrap table-wrap--solo" style="border:none;border-radius:0">
+            <table class="tbl"><thead><tr><th>时间</th><th>来源</th><th>类型</th><th>Topic</th><th>信息</th></tr></thead><tbody>
+              <tr><td class="num muted">10:42:18</td><td><span class="server-card__proto proto-k" style="width:20px;height:20px;border-radius:6px;font-size:10px">K</span></td><td><span class="tag tag--danger">死信</span></td><td class="mono">order-paid.DLQ</td><td>必填字段缺失：amount</td></tr>
+              <tr><td class="num muted">10:39:55</td><td><span class="server-card__proto proto-m" style="width:20px;height:20px;border-radius:6px;font-size:10px">M</span></td><td><span class="tag tag--warning">降级</span></td><td class="mono">emqx-prod</td><td>PINGREQ 超时，进入重连退避</td></tr>
+              <tr><td class="num muted">10:31:02</td><td><span class="server-card__proto proto-m" style="width:20px;height:20px;border-radius:6px;font-size:10px">M</span></td><td><span class="tag tag--info">未归类</span></td><td class="mono">device/+/telemetry</td><td>相似度 0.71 未达阈值</td></tr>
+            </tbody></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 服务连接 ============ -->
+      <section class="view" id="v-servers">
+        <div class="toolbar">
+          <input class="input" placeholder="搜索名称 / ID" style="width:200px">
+          <select class="select"><option>全部协议</option><option>Kafka</option><option>MQTT</option></select>
+          <select class="select"><option>全部状态</option><option>已连接</option><option>降级</option><option>离线</option></select>
+          <span class="spacer"></span>
+          <button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-download"/></svg>导出配置</button>
+          <button class="btn btn--primary btn--sm"><svg class="icon"><use href="#i-plus"/></svg>注册 Server</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>名称 / ID</th><th>协议</th><th>地址</th><th>连接模式</th><th>状态</th><th>重连</th><th>更新时间</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td><b>kafka-prod</b><br><span class="mono muted">kafka-prod</span></td><td><span class="tag tag--primary">Kafka</span></td><td class="mono">kafka-1:9092 …</td><td>EAGER</td><td><span class="tag tag--success"><span class="dot dot--pulse"></span>已连接</span></td><td class="num">0</td><td class="muted">2026-09-28</td><td class="col-actions"><button class="btn btn--text">详情</button><button class="btn btn--text">断开</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+            <tr><td><b>emqx-prod</b><br><span class="mono muted">emqx-prod</span></td><td><span class="tag tag--accent">MQTT 5.0</span></td><td class="mono">emqx-1:1883 …</td><td>EAGER</td><td><span class="tag tag--warning"><span class="dot dot--deg"></span>降级</span></td><td class="num">2</td><td class="muted">2026-09-29</td><td class="col-actions"><button class="btn btn--text">详情</button><button class="btn btn--text">连接</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+            <tr><td><b>emqx-staging</b><br><span class="mono muted">emqx-staging</span></td><td><span class="tag tag--accent">MQTT 3.1.1</span></td><td class="mono">emqx-stg:1883</td><td>LAZY</td><td><span class="tag tag--danger"><span class="dot dot--down"></span>离线</span></td><td class="num">6</td><td class="muted">2026-09-30</td><td class="col-actions"><button class="btn btn--text">详情</button><button class="btn btn--text">连接</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+            <tr><td><b>kafka-test</b><br><span class="mono muted">kafka-test</span></td><td><span class="tag tag--primary">Kafka</span></td><td class="mono">localhost:9092</td><td>MANUAL</td><td><span class="tag tag--info"><span class="dot dot--off"></span>未连接</span></td><td class="num">0</td><td class="muted">2026-09-25</td><td class="col-actions"><button class="btn btn--text">详情</button><button class="btn btn--text">连接</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+          </tbody></table>
+          <div class="pagination"><span>共 6 条 · 每页 20 条</span><div class="pagination__pages"><button class="page-btn active">1</button></div></div>
+        </div>
+      </section>
+
+      <!-- ============ Topic 管理 ============ -->
+      <section class="view" id="v-topics">
+        <div class="banner banner--info"><svg class="icon"><use href="#i-server"/></svg>当前 Server 上下文：<b>kafka-prod</b> <span class="muted">（切换 Server 将同步集群管理与调试台）</span></div>
+        <div class="toolbar">
+          <input class="input" placeholder="搜索 Topic 名称 / 模式" style="width:240px">
+          <select class="select"><option>全部方向</option><option>发布</option><option>订阅</option><option>双向</option></select>
+          <span class="spacer"></span>
+          <button class="btn btn--primary btn--sm"><svg class="icon"><use href="#i-plus"/></svg>登记 Topic</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>Topic</th><th>方向</th><th>格式</th><th>QoS</th><th>默认模板</th><th>引用</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td class="mono">order-paid</td><td><span class="tag tag--primary">订阅</span></td><td>json</td><td>—</td><td><span class="tag tag--success">tpl-order v5</span></td><td class="num">3 订阅</td><td class="col-actions"><button class="btn btn--text">Broker 详情</button><button class="btn btn--text">编辑</button></td></tr>
+            <tr><td class="mono">device/+/event</td><td><span class="tag tag--accent">双向</span></td><td>json</td><td class="num">1</td><td><span class="tag tag--success">tpl-device-event v3</span></td><td class="num">8 订阅</td><td class="col-actions"><button class="btn btn--text">Broker 详情</button><button class="btn btn--text">编辑</button></td></tr>
+            <tr><td class="mono">device/&#35;</td><td><span class="tag tag--primary">订阅</span></td><td>json</td><td class="num">2</td><td><span class="tag tag--warning">候选 ×2</span></td><td class="num">2 订阅</td><td class="col-actions"><button class="btn btn--text">Broker 详情</button><button class="btn btn--text">编辑</button></td></tr>
+            <tr><td class="mono">audit-log</td><td><span class="tag tag--info">发布</span></td><td>json</td><td>—</td><td><span class="tag tag--info">未绑定</span></td><td class="num">—</td><td class="col-actions"><button class="btn btn--text">Broker 详情</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+          </tbody></table>
+          <div class="pagination"><span>共 4 条</span><div class="pagination__pages"><button class="page-btn active">1</button></div></div>
+        </div>
+      </section>
+
+      <!-- ============ 集群管理 ============ -->
+      <section class="view" id="v-cluster">
+        <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:16px">
+          <span class="muted" style="font-size:13px">Server</span>
+          <select class="select"><option>kafka-prod（Kafka）</option><option>emqx-prod（MQTT）</option></select>
+          <span class="tag tag--info"><svg class="icon icon--14"><use href="#i-key"/></svg>allowAdminOps = true</span>
+        </div>
+        <div class="tabs" data-tabs="cluster">
+          <div class="tab active" data-tab="ck">Kafka 概览</div><div class="tab" data-tab="ct">Topics</div><div class="tab" data-tab="cg">消费组 / Lag</div><div class="tab" data-tab="ca">ACL</div>
+          <div class="tab" data-tab="en">EMQX 节点</div><div class="tab" data-tab="ec">客户端</div><div class="tab" data-tab="er">Retained</div>
+        </div>
+
+        <div class="ctab" id="ct-ck"><div class="grid-3">
+          <div class="server-card"><div class="server-card__head"><span class="server-card__name">broker-1</span><span class="tag tag--primary">控制器</span></div><div class="server-card__meta mono">kafka-1:9092 · v3.7.2<br>在线 12d · CPU 34%</div></div>
+          <div class="server-card"><div class="server-card__head"><span class="server-card__name">broker-2</span><span class="tag tag--success"><span class="dot dot--on"></span>在线</span></div><div class="server-card__meta mono">kafka-2:9092 · v3.7.2<br>在线 12d · CPU 41%</div></div>
+          <div class="server-card"><div class="server-card__head"><span class="server-card__name">broker-3</span><span class="tag tag--success"><span class="dot dot--on"></span>在线</span></div><div class="server-card__meta mono">kafka-3:9092 · v3.7.1<br>在线 8d · CPU 29%</div></div>
+        </div></div>
+
+        <div class="ctab" id="ct-ct" style="display:none">
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>Topic</th><th>分区</th><th>副本</th><th>Retention</th><th>内部</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td class="mono">order-paid</td><td class="num">6</td><td class="num">3</td><td>7d</td><td>—</td><td class="col-actions"><button class="btn btn--text">配置</button><button class="btn btn--text">扩容分区</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+            <tr><td class="mono">audit-log</td><td class="num">12</td><td class="num">3</td><td>30d</td><td>—</td><td class="col-actions"><button class="btn btn--text">配置</button><button class="btn btn--text">扩容分区</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+            <tr><td class="mono">__consumer_offsets</td><td class="num">50</td><td class="num">3</td><td>—</td><td><span class="tag tag--info">内部</span></td><td class="col-actions"><button class="btn btn--text">查看</button></td></tr>
+          </tbody></table></div>
+        </div>
+
+        <div class="ctab" id="ct-cg" style="display:none">
+          <div class="panel"><div class="panel__head"><span class="panel__title">组 billing · Lag 热力（组 × 分区）</span><button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button></div><div class="panel__body">
+            <div style="display:grid;grid-template-columns:64px repeat(6,1fr);gap:6px;text-align:center;font-size:11px;color:var(--wb-color-text-3)">
+              <span></span><span>P0</span><span>P1</span><span>P2</span><span>P3</span><span>P4</span><span>P5</span>
+              <span class="mono" style="text-align:left;align-self:center">billing</span>
+              <span class="tag tag--success num">120</span><span class="tag tag--success num">88</span><span class="tag tag--warning num">9.2k</span><span class="tag tag--danger num">128k</span><span class="tag tag--warning num">31k</span><span class="tag tag--success num">540</span>
+            </div>
+            <div style="display:flex;gap:16px;font-size:12px;color:var(--wb-color-text-3);margin-top:14px"><span><span class="tag tag--success" style="padding:0 6px">&nbsp;</span> &lt; 1k</span><span><span class="tag tag--warning" style="padding:0 6px">&nbsp;</span> &lt; 100k</span><span><span class="tag tag--danger" style="padding:0 6px">&nbsp;</span> ≥ 100k</span><span class="spacer"></span></div>
+          </div></div>
+          <div class="banner banner--warn"><svg class="icon"><use href="#i-warn"/></svg>分区 P3 lag 达 128k，建议排查消费线程阻塞。<button class="btn btn--default btn--sm" style="margin-left:auto">重置 offset（危险）</button></div>
+        </div>
+
+        <div class="ctab" id="ct-ca" style="display:none">
+          <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:12px"><input class="input" placeholder="principal / host 过滤" style="width:240px"><span class="spacer"></span><button class="btn btn--primary btn--sm"><svg class="icon"><use href="#i-plus"/></svg>新增 ACL</button></div>
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>Principal</th><th>Host</th><th>操作</th><th>资源</th><th>权限</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td class="mono">User:billing-svc</td><td class="mono">10.0.2.*</td><td>Read</td><td>Topic:order-paid</td><td><span class="tag tag--success">允许</span></td><td class="col-actions"><button class="btn btn--text danger">删除</button></td></tr>
+            <tr><td class="mono">User:producer-app</td><td class="mono">*</td><td>Write</td><td>Topic:audit-log</td><td><span class="tag tag--success">允许</span></td><td class="col-actions"><button class="btn btn--text danger">删除</button></td></tr>
+          </tbody></table></div>
+        </div>
+
+        <div class="ctab" id="ct-en" style="display:none">
+          <div class="grid-2">
+            <div class="server-card"><div class="server-card__head"><span class="server-card__name"><span class="server-card__proto proto-m" style="width:20px;height:20px;border-radius:6px;font-size:10px">M</span>emqx-1@emqx-prod</span><span class="tag tag--success"><span class="dot dot--pulse"></span>运行中</span></div><div class="server-card__meta">版本 5.8.4 · 运行 15d<br>连接 2,431 · 订阅 1,876 · 消息速率 3.1k/s</div></div>
+            <div class="server-card"><div class="server-card__head"><span class="server-card__name"><span class="server-card__proto proto-m" style="width:20px;height:20px;border-radius:6px;font-size:10px">M</span>emqx-2@emqx-prod</span><span class="tag tag--success"><span class="dot dot--pulse"></span>运行中</span></div><div class="server-card__meta">版本 5.8.4 · 运行 15d<br>连接 2,390 · 订阅 1,802 · 消息速率 2.9k/s</div></div>
+          </div>
+        </div>
+
+        <div class="ctab" id="ct-ec" style="display:none">
+          <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:12px"><input class="input" placeholder="clientId / IP 搜索" style="width:240px"><span class="spacer"></span><button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button></div>
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>ClientID</th><th>IP</th><th>协议</th><th>Keepalive</th><th>连接时长</th><th>订阅</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td class="mono">device-temp-01</td><td class="mono">10.1.4.21</td><td>5.0</td><td class="num">30s</td><td>3d 4h</td><td class="num">4</td><td class="col-actions"><button class="btn btn--text">详情</button><button class="btn btn--text danger" onclick="openDanger()">断开连接</button></td></tr>
+            <tr><td class="mono">gateway-hub-2</td><td class="mono">10.1.4.33</td><td>3.1.1</td><td class="num">60s</td><td>19h</td><td class="num">12</td><td class="col-actions"><button class="btn btn--text">详情</button><button class="btn btn--text danger" onclick="openDanger()">断开连接</button></td></tr>
+          </tbody></table></div>
+        </div>
+
+        <div class="ctab" id="ct-er" style="display:none">
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>Retained Topic</th><th>大小</th><th>发布方</th><th>时间</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td class="mono">device/temp-01/status</td><td class="num">412 B</td><td class="mono">device-temp-01</td><td>3d 前</td><td class="col-actions"><button class="btn btn--text">预览</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+            <tr><td class="mono">gateway/hub-2/config</td><td class="num">2.1 KB</td><td class="mono">mgmt-admin</td><td>7h 前</td><td class="col-actions"><button class="btn btn--text">预览</button><button class="btn btn--text danger" onclick="openDanger()">删除</button></td></tr>
+          </tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ============ 消息模板 ============ -->
+      <section class="view" id="v-templates">
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title">模板列表</span><button class="btn btn--primary btn--sm"><svg class="icon"><use href="#i-plus"/></svg></button></div>
+            <div style="padding:8px 10px;border-bottom:1px solid var(--wb-color-border)"><input class="input" placeholder="搜索模板" style="width:100%"></div>
+            <div class="feed" style="max-height:none">
+              <div class="feed-item open" style="cursor:pointer"><div class="feed-item__top"><svg class="icon"><use href="#i-file-text"/></svg><b>设备事件消息</b><span class="muted mono" style="font-size:11px;margin-left:auto">v3</span></div><div class="muted mono" style="font-size:11px">tpl-device-event · 已启用</div></div>
+              <div class="feed-item" style="cursor:pointer"><div class="feed-item__top"><svg class="icon"><use href="#i-file-text"/></svg>订单支付<span class="muted mono" style="font-size:11px;margin-left:auto">v5</span></div></div>
+              <div class="feed-item" style="cursor:pointer"><div class="feed-item__top"><svg class="icon"><use href="#i-file-text"/></svg>订单退款<span class="muted mono" style="font-size:11px;margin-left:auto">v2</span></div></div>
+              <div class="feed-item" style="cursor:pointer"><div class="feed-item__top"><svg class="icon"><use href="#i-file-text"/></svg>网关心跳<span class="tag tag--info">草稿</span><span class="muted mono" style="font-size:11px;margin-left:auto">v1</span></div></div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin:0">
+            <div class="panel__head"><div><span class="panel__title">设备事件消息 <span class="tag tag--primary">v3 · 当前</span></span><div class="muted mono" style="font-size:12px;font-weight:400;margin-top:2px">tpl-device-event · 引用：1 Topic · 8 订阅</div></div>
+              <div style="display:flex;gap:8px"><button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-wand"/></svg>样例反推</button><button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-download"/></svg>生成代码</button><button class="btn btn--primary btn--sm">保存</button></div>
+            </div>
+            <div class="panel__body" style="padding-top:0">
+              <div class="tabs" data-tabs="tpl" style="margin:16px 0 12px"><div class="tab active" data-tab="tf">字段定义</div><div class="tab" data-tab="tp">匹配预览</div><div class="tab" data-tab="tv">版本历史</div></div>
+
+              <div class="ttab" id="tt-tf">
+                <div class="table-wrap table-wrap--solo"><table class="tbl field-tree"><thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>注释</th><th>示例</th></tr></thead><tbody>
+                  <tr><td>deviceId</td><td><span class="tag tag--primary">string</span></td><td>✱</td><td>设备编号</td><td class="mono muted">temp-01</td></tr>
+                  <tr><td>temp</td><td><span class="tag tag--accent">number</span></td><td>✱</td><td>摄氏温度（℃）</td><td class="mono muted">36.8</td></tr>
+                  <tr><td>humidity</td><td><span class="tag tag--accent">number</span></td><td>—</td><td>相对湿度（%）</td><td class="mono muted">—</td></tr>
+                  <tr><td>ts</td><td><span class="tag tag--primary">string</span></td><td>✱</td><td>上报时间 · ISO-8601</td><td class="mono muted">2026-09-30T10:00:00+08:00</td></tr>
+                  <tr><td>alarm</td><td><span class="tag tag--warning">enum</span></td><td>—</td><td>告警级别</td><td class="mono muted">NONE|WARN|CRIT</td></tr>
+                  <tr class="vline-warn"><td>battery</td><td><span class="tag tag--info">object</span></td><td>—</td><td>电池信息</td><td>—</td></tr>
+                  <tr class="vline-danger"><td class="indent-1">level</td><td><span class="tag tag--accent">integer</span></td><td>✱</td><td>电量百分比 <span class="tag tag--danger">缺失必填</span></td><td class="mono muted">88</td></tr>
+                  <tr><td class="indent-1">voltage</td><td><span class="tag tag--accent">number</span></td><td>—</td><td>电压（V）</td><td class="mono muted">3.7</td></tr>
+                </tbody></table></div>
+                <button class="btn btn--default btn--sm" style="margin-top:12px"><svg class="icon"><use href="#i-plus"/></svg>添加字段</button>
+              </div>
+
+              <div class="ttab" id="tt-tp" style="display:none">
+                <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+                  <div><div class="field__label" style="margin-bottom:6px">样例消息</div>
+                    <div class="json"><span class="j-brace">{</span>
+  <span class="j-key">"deviceId"</span>: <span class="j-str">"temp-01"</span>,
+  <span class="j-key">"temp"</span>: <span class="j-num">36.8</span>,
+  <span class="j-key">"ts"</span>: <span class="j-str">"2026-09-30T10:00:00+08:00"</span>,
+  <span class="j-key">"battery"</span>: <span class="j-brace">{</span> <span class="j-key">"level"</span>: <span class="j-num">88</span> <span class="j-brace">}</span>
+<span class="j-brace">}</span></div>
+                  </div>
+                  <div><div class="field__label" style="margin-bottom:12px">候选模板匹配（阈值 0.8）</div>
+                    <div class="score-row"><span>tpl-device-event</span><span class="progress"><span style="width:100%"></span></span><span class="num" style="text-align:right">1.00</span></div>
+                    <div class="score-row"><span>tpl-gw-heartbeat</span><span class="progress"><span style="width:82%"></span></span><span class="num" style="text-align:right">0.82</span></div>
+                    <div class="score-row"><span>tpl-order</span><span class="progress"><span style="width:24%;background:var(--wb-color-text-disabled)"></span></span><span class="num muted" style="text-align:right">0.24</span></div>
+                    <div class="field__hint">→ 命中 <b class="tag tag--success">BOUND · tpl-device-event</b></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ttab" id="tt-tv" style="display:none">
+                <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>版本</th><th>变更</th><th>兼容性</th><th>时间</th></tr></thead><tbody>
+                  <tr><td class="num">v3</td><td>新增可选字段 battery.voltage</td><td><span class="tag tag--success">兼容</span></td><td class="muted">2026-09-28</td></tr>
+                  <tr><td class="num">v2</td><td>alarm 由 string 收紧为 enum</td><td><span class="tag tag--danger">不兼容</span></td><td class="muted">2026-09-20</td></tr>
+                  <tr><td class="num">v1</td><td>初始版本</td><td><span class="tag tag--info">—</span></td><td class="muted">2026-09-12</td></tr>
+                </tbody></table></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 收发调试台 ============ -->
+      <section class="view" id="v-messaging">
+        <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:16px">
+          <span class="muted" style="font-size:13px">Server</span><select class="select"><option>emqx-prod</option></select>
+          <span class="muted" style="font-size:13px">Topic</span><select class="select"><option>device/temp-01/event</option></select>
+          <span class="spacer"></span><span class="tag tag--primary"><span class="dot dot--pulse"></span>调试订阅不计入正式订阅</span>
+        </div>
+        <div class="split">
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-send"/></svg>发布</span>
+            <div class="seg" data-seg="mode"><button class="on">模板表单</button><button>JSON 源码</button></div></div>
+            <div class="panel__body">
+              <div class="field"><div class="field__label"><span class="req">*</span> deviceId <span class="muted">· 设备编号</span></div><input class="input" placeholder="temp-01" value="temp-01"></div>
+              <div class="field"><div class="field__label"><span class="req">*</span> temp <span class="muted">· 摄氏温度（℃）</span></div><input class="input" type="number" value="36.8"></div>
+              <div class="field"><div class="field__label"><span class="req">*</span> ts <span class="muted">· ISO-8601</span></div><input class="input mono" value="2026-09-30T10:00:00+08:00"></div>
+              <div class="field"><div class="field__label">alarm</div><select class="select" style="width:100%"><option>NONE</option><option>WARN</option><option>CRIT</option></select></div>
+              <div class="grid-2" style="gap:12px"><div class="field" style="margin:0"><div class="field__label">QoS</div><div class="seg" data-seg="qos"><button class="on">0</button><button class="on">1</button><button>2</button></div></div><div class="field" style="margin:0"><div class="field__label">retain</div><label class="check"><input type="checkbox"> 保留消息</label></div></div>
+              <div style="display:flex;gap:8px;margin-top:16px"><button class="btn btn--primary btn--md" onclick="showToast('success','已发布 · packetId 42，QoS1 已确认')"><svg class="icon"><use href="#i-send"/></svg>发送</button><button class="btn btn--default btn--md">校验</button></div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-inbox"/></svg>实时流</span>
+            <div style="display:flex;gap:8px"><button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-pause"/></svg>暂停</button><button class="btn btn--text btn--sm"><svg class="icon"><use href="#i-refresh"/></svg>清空</button></div></div>
+            <div class="feed" style="border-radius:0 0 var(--wb-radius-md) var(--wb-radius-md)">
+              <div class="feed-item open"><div class="feed-item__top"><span class="tag tag--success"><span class="dot dot--on"></span>BOUND</span><span class="feed-item__topic">device/temp-01/event</span><span class="num muted" style="font-size:11px">tpl-device-event</span><span class="feed-item__ts">10:00:04</span></div>
+                <div class="feed-item__body"><div class="json"><span class="j-brace">{</span> <span class="j-key">"deviceId"</span>:<span class="j-str">"temp-01"</span>, <span class="j-key">"temp"</span>:<span class="j-num">36.8</span>, <span class="j-key">"alarm"</span>:<span class="j-str">"NONE"</span> <span class="j-brace">}</span></div></div></div>
+              <div class="feed-item"><div class="feed-item__top"><span class="tag tag--warning"><span class="dot dot--off"></span>SIMILARITY 0.86</span><span class="feed-item__topic">device/temp-02/event</span><span class="feed-item__ts">10:00:01</span></div></div>
+              <div class="feed-item"><div class="feed-item__top"><span class="tag tag--info">未归类</span><span class="feed-item__topic">device/hub-9/status</span><span class="muted" style="font-size:11px">得分 0.71 · score &lt; 0.8</span><span class="feed-item__ts">09:59:58</span></div></div>
+              <div class="feed-item"><div class="feed-item__top"><span class="tag tag--primary">EXPLICIT</span><span class="feed-item__topic">device/temp-05/event</span><span class="mono muted" style="font-size:11px">x-template=tpl-device-event@3</span><span class="feed-item__ts">09:59:50</span></div></div>
+              <div class="feed-item"><div class="feed-item__top"><span class="tag tag--danger"><span class="dot dot--down"></span>解析失败</span><span class="feed-item__topic">device/temp-07/event</span><span class="muted" style="font-size:11px">必填缺失 temp</span><span class="feed-item__ts">09:59:44</span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 死信 DLQ ============ -->
+      <section class="view" id="v-dlq">
+        <div class="banner banner--info"><svg class="icon"><use href="#i-db"/></svg>当前为 <b>无库（file）模式</b>：仅支持尾部扫描与导出，条件分页查询不可用。</div>
+        <div class="toolbar">
+          <input class="input" placeholder="Topic" style="width:180px"><select class="select"><option>全部错误码</option><option>5001 必填缺失</option><option>5002 类型不符</option></select>
+          <input class="input" type="date" style="width:auto"><span class="spacer"></span>
+          <button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-download"/></svg>导出</button>
+          <button class="btn btn--primary btn--sm" id="batchReplay" disabled><svg class="icon"><use href="#i-refresh"/></svg>重放选中 0 条</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th style="width:36px"><label class="check"><input type="checkbox" id="chkAll"></label></th><th>时间</th><th>Topic</th><th>模板</th><th>错误</th><th>大小</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr><td><label class="check"><input type="checkbox" class="row-chk"></label></td><td class="num muted">10:42:18</td><td class="mono">order-paid.DLQ</td><td><span class="tag tag--success">tpl-order</span></td><td><span class="tag tag--danger">5001</span> 必填字段缺失：amount</td><td class="num">128 B</td><td class="col-actions"><button class="btn btn--text">查看</button><button class="btn btn--text">重放</button></td></tr>
+            <tr><td><label class="check"><input type="checkbox" class="row-chk"></label></td><td class="num muted">10:31:02</td><td class="mono">device/#.dead</td><td><span class="tag tag--info">未归类</span></td><td><span class="tag tag--danger">5002</span> temp 期望 number，实得 string</td><td class="num">96 B</td><td class="col-actions"><button class="btn btn--text">查看</button><button class="btn btn--text">重放</button></td></tr>
+            <tr><td><label class="check"><input type="checkbox" class="row-chk"></label></td><td class="num muted">09:58:20</td><td class="mono">order-paid.DLQ</td><td><span class="tag tag--success">tpl-order</span></td><td><span class="tag tag--danger">4003</span> MQTT 报文超过 max_packet_size</td><td class="num">1.3 MB</td><td class="col-actions"><button class="btn btn--text">查看</button><button class="btn btn--text danger">丢弃</button></td></tr>
+          </tbody></table>
+          <div class="pagination"><span>共 12 条 · 每页 20 条</span><div class="pagination__pages"><button class="page-btn active">1</button></div></div>
+        </div>
+      </section>
+
+      <!-- ============ 系统设置 ============ -->
+      <section class="view" id="v-settings">
+        <div class="grid-2">
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-db"/></svg>存储与能力</span></div><div class="panel__body">
+            <div class="detail-row"><span class="label">存储模式</span><span class="value"><span class="tag tag--primary">file（无数据库）</span></span></div>
+            <div class="detail-row"><span class="label">数据目录</span><span class="value mono">/var/lib/mngr</span></div>
+            <div class="detail-row"><span class="label">DLQ 查询</span><span class="value"><span class="tag tag--warning">受限</span> 仅尾部扫描 / 导出</span></div>
+            <div class="detail-row" style="border:none"><span class="label">指标端点</span><span class="value"><a class="mono" href="#">/actuator/prometheus</a></span></div>
+          </div></div>
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-key"/></svg>安全</span></div><div class="panel__body">
+            <div class="detail-row"><span class="label">鉴权 Token</span><span class="value"><span class="tag tag--success"><span class="dot dot--on"></span>已启用</span></span></div>
+            <div class="detail-row"><span class="label">主密钥来源</span><span class="value mono">env:MNGR_MASTER_KEY</span></div>
+            <div class="detail-row"><span class="label">凭据加密</span><span class="value">AES-256-GCM</span></div>
+            <div class="detail-row" style="border:none"><span class="label">危险操作</span><span class="value">DANGER 级需输入资源名二次确认</span></div>
+          </div></div>
+        </div>
+        <div class="panel" style="margin-top:16px"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-settings"/></svg>运行参数</span></div><div class="panel__body grid-3">
+          <div class="field"><div class="field__label">发布重试次数</div><input class="input" value="3"></div>
+          <div class="field"><div class="field__label">缓冲队列容量</div><input class="input" value="10000"></div>
+          <div class="field"><div class="field__label">模板匹配阈值</div><input class="input" value="0.8"></div>
+        </div></div>
+      </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- 危险操作对话框 -->
+<div class="modal-overlay" id="dangerOverlay"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="dangerTitle">
+  <div class="modal__head"><span class="warn-ico"><svg class="icon icon--20"><use href="#i-warn"/></svg></span><span id="dangerTitle">删除 Topic order-paid？</span></div>
+  <div class="modal__body">
+    此操作不可逆。该 Topic 当前有 <b>6 个分区</b>、保留期 <b>7d</b>，并被 <b>3 个活跃订阅</b>引用。删除后消息将全部丢失。
+    <div class="box field"><div class="field__label">请输入资源名 <span class="mono">order-paid</span> 以确认</div><input class="input" id="dangerInput" placeholder="order-paid" oninput="document.getElementById('dangerGo').disabled=this.value!=='order-paid'"></div>
+  </div>
+  <div class="modal__foot"><button class="btn btn--default btn--md" onclick="closeDanger()">取消</button><button class="btn btn--danger btn--md" id="dangerGo" disabled onclick="closeDanger();showToast('info','已提交删除请求（原型演示）')">删除 Topic</button></div>
+</div></div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+const html=document.documentElement;
+document.getElementById('themeToggle').addEventListener('click',function(){const n=html.getAttribute('data-theme')==='dark'?'light':'dark';html.setAttribute('data-theme',n);this.innerHTML='<svg class="icon"><use href="'+(n==='dark'?'#i-sun':'#i-moon')+'"/></svg>';try{localStorage.setItem('wb-theme',n)}catch(e){}});
+(function(){let s;try{s=localStorage.getItem('wb-theme')}catch(e){}if(s){html.setAttribute('data-theme',s);document.getElementById('themeToggle').innerHTML='<svg class="icon"><use href="'+(s==='dark'?'#i-sun':'#i-moon')+'"/></svg>'}})();
+
+const META={
+  dashboard:['概览 <span>/</span> <span>监控总览</span>','监控总览','实时掌握 Server 连接健康、吞吐趋势与消息模板归类分布。'],
+  servers:['消息接入 <span>/</span> <span>服务连接</span>','服务连接 (Server)','注册、连接与监控 Kafka / EMQX Broker。'],
+  topics:['消息接入 <span>/</span> <span>Topic 管理</span>','Topic 管理','维护 Topic 映射、方向、默认格式与消息模板绑定。'],
+  cluster:['消息接入 <span>/</span> <span>集群管理</span>','集群管理','Broker 侧 Topic / 消费组 / ACL / 客户端 / Retained 管理（受 allowAdminOps 门控）。'],
+  templates:['消息工厂 <span>/</span> <span>消息模板</span>','消息模板','定义字段结构、样例反推、匹配预览与版本演进。'],
+  messaging:['消息工厂 <span>/</span> <span>收发调试台</span>','收发调试台','发布消息并实时观察订阅流的模板归类结果。'],
+  dlq:['运维 <span>/</span> <span>死信 DLQ</span>','死信 DLQ','浏览解析/发送失败的消息，查看原因并重放回目标 Topic。'],
+  settings:['运维 <span>/</span> <span>系统设置</span>','系统设置','存储模式、安全与运行参数。']
+};
+const items=document.querySelectorAll('.sidebar__item[data-route]');
+function go(r){items.forEach(i=>i.classList.toggle('active',i.dataset.route===r));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const el=document.getElementById('v-'+r);if(el)el.classList.add('active');
+  const m=META[r];document.getElementById('breadcrumb').innerHTML=m[0];document.getElementById('viewTitle').textContent=m[1];document.getElementById('viewDesc').textContent=m[2];
+  document.querySelector('.content').scrollTop=0;}
+items.forEach(i=>i.addEventListener('click',()=>go(i.dataset.route)));
+
+document.querySelectorAll('.tabs[data-tabs] .tab').forEach(t=>t.addEventListener('click',()=>{
+  const group=t.closest('.tabs').dataset.tabs;
+  t.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');
+  const box=t.closest('.panel__body')||t.closest('.view');
+  if(group==='cluster'){document.querySelectorAll('#v-cluster .ctab').forEach(c=>c.style.display='none');document.getElementById('ct-'+t.dataset.tab).style.display='';}
+  else{box.querySelectorAll('.ttab').forEach(c=>c.style.display='none');box.querySelector('#tt-'+t.dataset.tab).style.display='';}
+}));
+
+document.querySelectorAll('.feed-item').forEach(f=>f.addEventListener('click',e=>{if(e.target.closest('.json'))return;if(f.querySelector('.feed-item__body'))f.classList.toggle('open')}));
+
+function openDanger(){document.getElementById('dangerOverlay').classList.add('open');const i=document.getElementById('dangerInput');i.value='';document.getElementById('dangerGo').disabled=true}
+function closeDanger(){document.getElementById('dangerOverlay').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDanger()}});
+
+const stack=document.getElementById('toastStack');
+function showToast(type,msg){const map={success:'i-check',error:'i-x',info:'i-help'};const t=document.createElement('div');t.className='toast toast--'+type;
+  t.innerHTML='<span class="toast__icon"><svg class="icon icon--14"><use href="#'+map[type]+'"/></svg></span><span>'+msg+'</span>';
+  stack.appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s,transform .3s';t.style.opacity='0';t.style.transform='translateX(120%)';setTimeout(()=>t.remove(),300)},2600)}
+
+document.getElementById('chkAll')?.addEventListener('change',function(){document.querySelectorAll('.row-chk').forEach(c=>c.checked=this.checked);updateBatch()});
+document.querySelectorAll('.row-chk').forEach(c=>c.addEventListener('change',updateBatch));
+function updateBatch(){const n=document.querySelectorAll('.row-chk:checked').length;const b=document.getElementById('batchReplay');if(b){b.disabled=n===0;b.querySelector('svg').nextSibling;const txt=b.childNodes[b.childNodes.length-1];txt.textContent='重放选中 '+n+' 条'}}
+</script>
+</body>
+</html>

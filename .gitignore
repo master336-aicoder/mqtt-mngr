@@ -1,0 +1,38 @@
+# build output
+target/
+*.class
+mail-server-web/node_modules/
+mail-server-web/node/
+mail-server-web/dist/
+mail-server-web/tsconfig.tsbuildinfo
+# api 模块把 mail-server-web/dist 打成 classpath:/static/admin，源树里不再落前端产物
+mail-server-api/src/main/resources/static/
+# scripts/build-artifact.sh 的产出目录
+artifacts/
+
+# runtime data
+mail-data/
+*.log
+.tmp-backend.log
+
+# editors / os
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# local secrets
+.env
+*.pem
+*.key
+*.p12
+*.pfx
+# machine-local credential overrides read via spring.config.import
+config/application-local.yml
+
+# python cache
+__pycache__/
+*.pyc
+
+# endpoint sweep output (tools/endpoint_sweep.py)
+tools/sweep-result.json

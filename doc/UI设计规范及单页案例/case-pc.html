@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI 规范案例 · PC 端后台管理（v1.3）</title>
+<style>
+/* ========== 令牌层 v1.3 · 商务淡蓝 + 强化玻璃拟态 ========== */
+:root,[data-theme="light"]{
+  --wb-color-primary:#3B82F6;--wb-color-primary-hover:#2563EB;--wb-color-primary-active:#1D4ED8;--wb-color-primary-bg:#EFF6FF;
+  --wb-color-accent:#0EA5E9;
+  --wb-color-success:#10B981;--wb-color-warning:#F59E0B;--wb-color-danger:#EF4444;--wb-color-info:#64748B;
+  --wb-color-bg:#F8FAFC;--wb-color-surface:#FFFFFF;
+  --wb-glass-bg:rgba(255,255,255,.52);--wb-glass-border:rgba(255,255,255,.78);--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.45);
+  --wb-color-border:rgba(15,23,42,.08);--wb-color-border-hover:rgba(15,23,42,.16);
+  --wb-color-text:#0F172A;--wb-color-text-2:#475569;--wb-color-text-3:#64748B;--wb-color-text-disabled:#94A3B8;--wb-color-striping:rgba(15,23,42,.03);
+  --wb-font-family:system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  --wb-radius-sm:8px;--wb-radius-md:12px;--wb-radius-lg:16px;--wb-radius-full:999px;
+  --wb-shadow-sm:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);
+  --wb-shadow-md:0 4px 16px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04);
+  --wb-shadow-lg:0 16px 48px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.06);
+  --wb-shadow-glow:0 8px 32px rgba(59,130,246,.35);
+  --wb-z-sticky:1100;--wb-z-drawer:1200;--wb-z-message:1400;
+  --wb-motion-fast:120ms;--wb-motion-base:200ms;--wb-motion-slow:320ms;
+  --wb-motion-ease:cubic-bezier(.32,.72,0,1);--wb-motion-spring:cubic-bezier(.34,1.56,.64,1);
+  --wb-gradient:linear-gradient(135deg,#3B82F6 0%,#0EA5E9 100%);
+}
+[data-theme="dark"]{
+  --wb-color-primary:#60A5FA;--wb-color-primary-hover:#93C5FD;--wb-color-primary-active:#3B82F6;--wb-color-primary-bg:rgba(59,130,246,.18);
+  --wb-color-accent:#38BDF8;
+  --wb-color-success:#34D399;--wb-color-warning:#FBBF24;--wb-color-danger:#F87171;--wb-color-info:#94A3B8;
+  --wb-color-bg:#0B1120;--wb-color-surface:#111827;
+  --wb-glass-bg:rgba(30,41,59,.42);--wb-glass-border:rgba(255,255,255,.15);--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.10);
+  --wb-color-border:rgba(255,255,255,.10);--wb-color-border-hover:rgba(255,255,255,.20);
+  --wb-color-text:#F1F5F9;--wb-color-text-2:#CBD5E1;--wb-color-text-3:#94A3B8;--wb-color-text-disabled:#64748B;--wb-color-striping:rgba(255,255,255,.04);
+  --wb-shadow-sm:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.4);
+  --wb-shadow-md:0 4px 16px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3);
+  --wb-shadow-lg:0 16px 48px rgba(0,0,0,.55),0 4px 16px rgba(0,0,0,.4);
+  --wb-shadow-glow:0 8px 32px rgba(96,165,250,.4);
+  --wb-gradient:linear-gradient(135deg,#60A5FA 0%,#38BDF8 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--wb-font-family);font-size:14px;line-height:22px;color:var(--wb-color-text);-webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(circle at 0% 0%,rgba(59,130,246,.16),transparent 42%),
+    radial-gradient(circle at 100% 0%,rgba(14,165,233,.16),transparent 42%),
+    radial-gradient(circle at 50% 100%,rgba(125,211,252,.12),transparent 55%),
+    var(--wb-color-bg);
+  background-attachment:fixed;
+  transition:background var(--wb-motion-slow) var(--wb-motion-ease),color var(--wb-motion-slow) var(--wb-motion-ease)}
+[data-theme="dark"] body{background:
+    radial-gradient(circle at 0% 0%,rgba(59,130,246,.27),transparent 45%),
+    radial-gradient(circle at 100% 0%,rgba(14,165,233,.26),transparent 45%),
+    radial-gradient(circle at 50% 100%,rgba(125,211,252,.16),transparent 55%),
+    var(--wb-color-bg);background-attachment:fixed}
+a{color:var(--wb-color-primary);text-decoration:none}
+code{font-family:ui-monospace,Consolas,monospace;font-size:13px;background:var(--wb-color-striping);padding:2px 6px;border-radius:6px}
+:focus-visible{outline:2px solid var(--wb-color-primary);outline-offset:2px;border-radius:4px}
+.icon{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block}
+.icon--20{width:20px;height:20px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* 顶栏（玻璃） */
+.topbar{height:60px;display:flex;align-items:center;gap:16px;padding:0 24px;flex-shrink:0;z-index:var(--wb-z-sticky);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));
+  border-bottom:1px solid var(--wb-color-border)}
+.topbar__logo{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;letter-spacing:-.01em;white-space:nowrap}
+.topbar__logo .mark{width:28px;height:28px;border-radius:8px;background:var(--wb-gradient);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--wb-shadow-glow)}
+.topbar__search{flex:1;max-width:360px;position:relative}
+.topbar__search input{width:100%;height:34px;padding:0 12px 0 34px;font:inherit;font-size:13px;color:var(--wb-color-text);background:var(--wb-color-striping);border:1px solid transparent;border-radius:var(--wb-radius-full);transition:all var(--wb-motion-fast) var(--wb-motion-ease)}
+.topbar__search input:focus{outline:none;border-color:var(--wb-color-primary);background:var(--wb-color-surface);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+.topbar__search .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--wb-color-text-3)}
+.topbar__right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.topbar__icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;border-radius:var(--wb-radius-sm);cursor:pointer;color:var(--wb-color-text-2);position:relative;transition:background var(--wb-motion-fast) var(--wb-motion-ease)}
+.topbar__icon-btn:hover{background:var(--wb-color-striping);color:var(--wb-color-text)}
+.topbar__icon-btn .badge{position:absolute;top:3px;right:3px;min-width:16px;height:16px;padding:0 4px;font-size:10px;font-weight:600;line-height:16px;text-align:center;color:#fff;background:var(--wb-color-danger);border-radius:var(--wb-radius-full)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--wb-color-primary-bg);color:var(--wb-color-primary);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;cursor:pointer;border:none}
+.theme-toggle{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--wb-color-border);background:var(--wb-color-surface);border-radius:var(--wb-radius-sm);cursor:pointer;color:var(--wb-color-text-2);transition:all var(--wb-motion-fast) var(--wb-motion-ease)}
+.theme-toggle:hover{border-color:var(--wb-color-border-hover);color:var(--wb-color-text)}
+
+.body{display:flex;flex:1;overflow:hidden}
+
+/* 侧栏（玻璃） */
+.sidebar{width:228px;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border-right:1px solid var(--wb-color-border)}
+.sidebar__group-title{padding:16px 16px 6px;font-size:11px;color:var(--wb-color-text-3);letter-spacing:.06em}
+.sidebar__item{display:flex;align-items:center;gap:10px;padding:9px 16px;font-size:13px;color:var(--wb-color-text-2);cursor:pointer;border-left:2px solid transparent;transition:all var(--wb-motion-fast) var(--wb-motion-ease)}
+.sidebar__item:hover{background:var(--wb-color-striping);color:var(--wb-color-text)}
+.sidebar__item.active{color:var(--wb-color-primary);background:var(--wb-color-primary-bg);border-left-color:var(--wb-color-primary);font-weight:600}
+.sidebar__item.active .icon{color:var(--wb-color-primary)}
+.sidebar__item.sub{padding-left:40px;font-size:12px}
+.sidebar__collapse{margin-top:auto;padding:12px 16px;border-top:1px solid var(--wb-color-border);font-size:12px;color:var(--wb-color-text-3);cursor:pointer;display:flex;align-items:center;gap:6px}
+
+/* 内容区 */
+.content{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.content__head{padding:16px 24px 0}
+.breadcrumb{font-size:13px;color:var(--wb-color-text-3)}
+.breadcrumb span{color:var(--wb-color-text-2)}
+.content__title{font-size:20px;font-weight:600;letter-spacing:-.014em;padding:8px 24px 16px;display:flex;align-items:center;justify-content:space-between}
+.content__body{padding:0 24px 24px;flex:1}
+
+/* 统计卡片（玻璃） */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+.stat-card{padding:18px;border-radius:var(--wb-radius-md);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md);transition:transform var(--wb-motion-base) var(--wb-motion-ease)}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-card__top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.stat-card__label{font-size:12px;color:var(--wb-color-text-3)}
+.stat-card__icon{width:32px;height:32px;border-radius:9px;background:var(--wb-gradient);color:#fff;display:flex;align-items:center;justify-content:center}
+.stat-card__value{font-size:24px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}
+.stat-card__trend{font-size:12px;margin-top:4px;display:flex;align-items:center;gap:3px}
+.stat-card__trend.up{color:var(--wb-color-danger)}
+.stat-card__trend.down{color:var(--wb-color-success)}
+
+/* 工具栏 */
+.toolbar{padding:12px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-md) var(--wb-radius-md) 0 0;border-bottom:none}
+.toolbar .input,.toolbar select{height:34px;padding:0 12px;font:inherit;font-size:13px;color:var(--wb-color-text);background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-sm);transition:all var(--wb-motion-fast) var(--wb-motion-ease)}
+.toolbar .input:focus,.toolbar select:focus{outline:none;border-color:var(--wb-color-primary);box-shadow:0 0 0 3px rgba(59,130,246,.18)}
+.toolbar .input::placeholder{color:var(--wb-color-text-disabled)}
+.toolbar .spacer{flex:1}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:14px;font-weight:500;line-height:1;border-radius:var(--wb-radius-sm);border:1px solid transparent;cursor:pointer;white-space:nowrap;transition:all var(--wb-motion-base) var(--wb-motion-ease)}
+.btn--md{height:34px;padding:0 16px}
+.btn--sm{height:30px;padding:0 12px;font-size:13px}
+.btn--primary{background:var(--wb-gradient);color:#fff;box-shadow:0 4px 14px rgba(59,130,246,.30)}
+.btn--primary:hover{box-shadow:0 6px 22px rgba(59,130,246,.45);transform:translateY(-1px)}
+.btn--default{background:var(--wb-color-surface);border-color:var(--wb-color-border);color:var(--wb-color-text)}
+.btn--default:hover{border-color:var(--wb-color-border-hover);background:var(--wb-color-striping)}
+.btn--text{color:var(--wb-color-primary);padding:0 8px;height:34px}
+.btn--text:hover{background:var(--wb-color-primary-bg)}
+.btn--danger{background:var(--wb-color-danger);color:#fff}
+.btn--text.danger{color:var(--wb-color-danger)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* 批量条 */
+.batch-bar{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--wb-color-primary-bg);border:1px solid var(--wb-color-primary);border-radius:var(--wb-radius-md);margin-bottom:16px;font-size:13px;animation:pop var(--wb-motion-slow) var(--wb-motion-spring)}
+@keyframes pop{from{transform:scale(.97);opacity:0}to{transform:scale(1);opacity:1}}
+.batch-bar .count{color:var(--wb-color-primary);font-weight:600}
+
+/* 表格（实体表面） */
+.table-wrap{background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:0 0 var(--wb-radius-md) var(--wb-radius-md);overflow:hidden}
+table.tbl{width:100%;border-collapse:collapse;font-size:13px}
+table.tbl thead th{background:var(--wb-color-striping);font-weight:600;text-align:left;padding:11px 16px;border-bottom:1px solid var(--wb-color-border);white-space:nowrap;font-size:12px;letter-spacing:.02em;color:var(--wb-color-text-2)}
+table.tbl tbody td{padding:13px 16px;border-bottom:1px solid var(--wb-color-border);color:var(--wb-color-text-2)}
+table.tbl tbody tr:last-child td{border-bottom:none}
+table.tbl tbody tr{transition:background var(--wb-motion-fast) var(--wb-motion-ease)}
+table.tbl tbody tr:hover{background:var(--wb-color-striping)}
+table.tbl .col-actions{text-align:right;white-space:nowrap}
+table.tbl .col-actions .btn--text{padding:0 6px;height:auto;font-size:13px}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:12px;border-radius:var(--wb-radius-sm);line-height:18px}
+.tag--success{color:var(--wb-color-success);background:rgba(16,185,129,.12)}
+.tag--warning{color:var(--wb-color-warning);background:rgba(245,158,11,.12)}
+.tag--danger{color:var(--wb-color-danger);background:rgba(239,68,68,.12)}
+.tag--info{color:var(--wb-color-info);background:rgba(100,116,139,.12)}
+.tag--primary{color:var(--wb-color-primary);background:var(--wb-color-primary-bg)}
+.check{display:inline-flex;align-items:center;cursor:pointer}
+.check input{width:16px;height:16px;accent-color:var(--wb-color-primary)}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot--on{background:var(--wb-color-success)}
+.dot--off{background:var(--wb-color-warning)}
+
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--wb-color-border);font-size:12px;color:var(--wb-color-text-3)}
+.pagination__pages{display:flex;align-items:center;gap:4px}
+.page-btn{min-width:30px;height:30px;border:1px solid var(--wb-color-border);background:var(--wb-color-surface);border-radius:var(--wb-radius-sm);cursor:pointer;font-size:12px;color:var(--wb-color-text-2);display:inline-flex;align-items:center;justify-content:center;transition:all var(--wb-motion-fast) var(--wb-motion-ease)}
+.page-btn:hover{border-color:var(--wb-color-primary);color:var(--wb-color-primary)}
+.page-btn.active{background:var(--wb-gradient);color:#fff;border-color:transparent}
+
+/* 抽屉（玻璃） */
+.drawer-overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:calc(var(--wb-z-drawer) - 1);display:none}
+[data-theme="dark"] .drawer-overlay{background:rgba(0,0,0,.6)}
+.drawer-overlay.open{display:block;animation:fade var(--wb-motion-slow) var(--wb-motion-ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:90vw;z-index:var(--wb-z-drawer);display:flex;flex-direction:column;transform:translateX(100%);transition:transform var(--wb-motion-slow) var(--wb-motion-ease);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));
+  border-left:1px solid var(--wb-glass-border);box-shadow:var(--wb-shadow-lg)}
+.drawer.open{transform:translateX(0)}
+.drawer__head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--wb-color-border)}
+.drawer__title{font-size:16px;font-weight:600}
+.drawer__close{border:none;background:none;cursor:pointer;color:var(--wb-color-text-3);width:32px;height:32px;border-radius:var(--wb-radius-sm);display:flex;align-items:center;justify-content:center;transition:all var(--wb-motion-fast)}
+.drawer__close:hover{background:var(--wb-color-striping);color:var(--wb-color-text)}
+.drawer__body{flex:1;overflow-y:auto;padding:20px}
+.drawer__foot{display:flex;gap:8px;justify-content:flex-end;padding:16px 20px;border-top:1px solid var(--wb-color-border)}
+.detail-row{display:flex;padding:11px 0;border-bottom:1px solid var(--wb-color-border)}
+.detail-row .label{width:100px;color:var(--wb-color-text-3);font-size:13px;flex-shrink:0}
+.detail-row .value{font-size:13px;color:var(--wb-color-text)}
+
+/* Toast */
+.toast-stack{position:fixed;top:16px;right:16px;z-index:var(--wb-z-message);display:flex;flex-direction:column;gap:8px}
+.toast{display:flex;align-items:center;gap:10px;min-width:240px;padding:11px 16px;background:var(--wb-color-surface);border:1px solid var(--wb-color-border);border-radius:var(--wb-radius-md);box-shadow:var(--wb-shadow-lg);font-size:13px;animation:slideIn var(--wb-motion-slow) var(--wb-motion-ease)}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast__icon{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.toast--success .toast__icon{background:var(--wb-color-success)}
+.toast--info .toast__icon{background:var(--wb-color-info)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-chevleft" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevright" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><path d="M22 17 13.5 8.5 8.5 13.5 2 7"/><path d="M16 17h6v-6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+</svg>
+
+<div class="app">
+  <header class="topbar">
+    <div class="topbar__logo"><span class="mark"><svg class="icon"><use href="#i-layers"/></svg></span>管理控制台</div>
+    <div class="topbar__search">
+      <span class="ico"><svg class="icon"><use href="#i-search"/></svg></span>
+      <input placeholder="搜索用户、订单、设置…">
+    </div>
+    <div class="topbar__right">
+      <button class="theme-toggle" id="themeToggle" aria-label="切换主题"><svg class="icon"><use href="#i-moon"/></svg></button>
+      <button class="topbar__icon-btn" aria-label="通知"><svg class="icon icon--20"><use href="#i-bell"/></svg><span class="badge">3</span></button>
+      <button class="topbar__icon-btn" aria-label="帮助"><svg class="icon icon--20"><use href="#i-help"/></svg></button>
+      <button class="avatar">张</button>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <div class="sidebar__group-title">概览</div>
+      <div class="sidebar__item"><svg class="icon"><use href="#i-grid"/></svg>仪表盘</div>
+      <div class="sidebar__group-title">管理</div>
+      <div class="sidebar__item active"><svg class="icon"><use href="#i-users"/></svg>用户管理</div>
+      <div class="sidebar__item sub">用户列表</div>
+      <div class="sidebar__item sub">角色权限</div>
+      <div class="sidebar__item sub">登录日志</div>
+      <div class="sidebar__item"><svg class="icon"><use href="#i-package"/></svg>订单管理</div>
+      <div class="sidebar__item"><svg class="icon"><use href="#i-tag"/></svg>商品管理</div>
+      <div class="sidebar__item"><svg class="icon"><use href="#i-chart"/></svg>财务统计</div>
+      <div class="sidebar__group-title">系统</div>
+      <div class="sidebar__item"><svg class="icon"><use href="#i-settings"/></svg>系统设置</div>
+      <div class="sidebar__item"><svg class="icon"><use href="#i-lock"/></svg>安全审计</div>
+      <div class="sidebar__collapse"><svg class="icon" style="width:14px;height:14px"><use href="#i-chevleft"/></svg>收起菜单</div>
+    </aside>
+
+    <main class="content">
+      <div class="content__head"><nav class="breadcrumb">管理 <span>/</span> 用户管理 <span>/</span> 用户列表</nav></div>
+      <div class="content__title">
+        用户列表
+        <button class="btn btn--primary btn--md" onclick="showToast('success')"><svg class="icon"><use href="#i-plus"/></svg>新建用户</button>
+      </div>
+      <div class="content__body">
+
+        <div class="stats">
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">总用户数</span><span class="stat-card__icon"><svg class="icon"><use href="#i-users"/></svg></span></div><div class="stat-card__value">12,486</div><div class="stat-card__trend up"><svg class="icon" style="width:12px;height:12px"><use href="#i-trend-up"/></svg>8.2% 较上月</div></div>
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">今日新增</span><span class="stat-card__icon"><svg class="icon"><use href="#i-plus"/></svg></span></div><div class="stat-card__value">38</div><div class="stat-card__trend up"><svg class="icon" style="width:12px;height:12px"><use href="#i-trend-up"/></svg>12%</div></div>
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">活跃用户</span><span class="stat-card__icon"><svg class="icon"><use href="#i-user"/></svg></span></div><div class="stat-card__value">3,205</div><div class="stat-card__trend up"><svg class="icon" style="width:12px;height:12px"><use href="#i-trend-up"/></svg>5.1%</div></div>
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">待审核</span><span class="stat-card__icon"><svg class="icon"><use href="#i-clock"/></svg></span></div><div class="stat-card__value">7</div><div class="stat-card__trend down"><svg class="icon" style="width:12px;height:12px"><use href="#i-trend-down"/></svg>3</div></div>
+        </div>
+
+        <div class="batch-bar" id="batchBar" style="display:none">
+          <svg class="icon"><use href="#i-check"/></svg><span class="count" id="batchCount">0</span> 项已选中
+          <span class="spacer" style="flex:1"></span>
+          <button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-download"/></svg>批量导出</button>
+          <button class="btn btn--text danger btn--sm"><svg class="icon"><use href="#i-x"/></svg>批量删除</button>
+          <button class="btn btn--text btn--sm" onclick="clearBatch()">取消</button>
+        </div>
+
+        <div class="toolbar">
+          <input class="input" placeholder="搜索用户名 / 邮箱" style="width:200px">
+          <select><option>全部角色</option><option>管理员</option><option>编辑</option><option>访客</option></select>
+          <select><option>全部状态</option><option>在线</option><option>离线</option><option>待激活</option></select>
+          <input class="input" type="date" style="width:auto">
+          <span class="spacer"></span>
+          <button class="btn btn--default btn--sm"><svg class="icon"><use href="#i-refresh"/></svg>重置</button>
+          <button class="btn btn--primary btn--sm"><svg class="icon"><use href="#i-search"/></svg>查询</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th style="width:36px"><label class="check"><input type="checkbox" id="chkAll"></label></th>
+                <th>用户</th><th>角色</th><th>状态</th><th>注册时间</th><th>最近登录</th><th class="col-actions">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><label class="check"><input type="checkbox" class="row-chk"></label></td>
+                <td><span class="avatar" style="width:28px;height:28px;font-size:12px;margin-right:8px;vertical-align:middle">张</span>张三 <span style="color:var(--wb-color-text-3);font-size:12px">zhangsan</span></td>
+                <td><span class="tag tag--primary">管理员</span></td>
+                <td><span class="tag tag--success"><span class="dot dot--on"></span>在线</span></td>
+                <td>2026-09-20 14:30</td><td>2 分钟前</td>
+                <td class="col-actions"><button class="btn btn--text" onclick="openDrawer()">详情</button><button class="btn btn--text danger">删除</button></td>
+              </tr>
+              <tr>
+                <td><label class="check"><input type="checkbox" class="row-chk"></label></td>
+                <td><span class="avatar" style="width:28px;height:28px;font-size:12px;margin-right:8px;vertical-align:middle;background:rgba(14,165,233,.15);color:#0EA5E9">李</span>李四 <span style="color:var(--wb-color-text-3);font-size:12px">lisi</span></td>
+                <td><span class="tag tag--info">编辑</span></td>
+                <td><span class="tag tag--warning"><span class="dot dot--off"></span>离线</span></td>
+                <td>2026-09-21 09:15</td><td>3 小时前</td>
+                <td class="col-actions"><button class="btn btn--text" onclick="openDrawer()">详情</button><button class="btn btn--text danger">删除</button></td>
+              </tr>
+              <tr>
+                <td><label class="check"><input type="checkbox" class="row-chk"></label></td>
+                <td><span class="avatar" style="width:28px;height:28px;font-size:12px;margin-right:8px;vertical-align:middle;background:rgba(6,182,212,.15);color:#06B6D4">王</span>王五 <span style="color:var(--wb-color-text-3);font-size:12px">wangwu</span></td>
+                <td><span class="tag tag--info">访客</span></td>
+                <td><span class="tag tag--info">待激活</span></td>
+                <td>2026-09-22 16:42</td><td>—</td>
+                <td class="col-actions"><button class="btn btn--text" onclick="openDrawer()">详情</button><button class="btn btn--text danger">删除</button></td>
+              </tr>
+              <tr>
+                <td><label class="check"><input type="checkbox" class="row-chk"></label></td>
+                <td><span class="avatar" style="width:28px;height:28px;font-size:12px;margin-right:8px;vertical-align:middle">赵</span>赵六 <span style="color:var(--wb-color-text-3);font-size:12px">zhaoliu</span></td>
+                <td><span class="tag tag--primary">管理员</span></td>
+                <td><span class="tag tag--success"><span class="dot dot--on"></span>在线</span></td>
+                <td>2026-08-15 11:20</td><td>10 分钟前</td>
+                <td class="col-actions"><button class="btn btn--text" onclick="openDrawer()">详情</button><button class="btn btn--text danger">删除</button></td>
+              </tr>
+              <tr>
+                <td><label class="check"><input type="checkbox" class="row-chk"></label></td>
+                <td><span class="avatar" style="width:28px;height:28px;font-size:12px;margin-right:8px;vertical-align:middle;background:rgba(236,72,153,.15);color:#EC4899">钱</span>钱七 <span style="color:var(--wb-color-text-3);font-size:12px">qianqi</span></td>
+                <td><span class="tag tag--info">编辑</span></td>
+                <td><span class="tag tag--warning"><span class="dot dot--off"></span>离线</span></td>
+                <td>2026-09-10 08:05</td><td>1 天前</td>
+                <td class="col-actions"><button class="btn btn--text" onclick="openDrawer()">详情</button><button class="btn btn--text danger">删除</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <span>共 12,486 条 · 每页 20 条</span>
+            <div class="pagination__pages">
+              <button class="page-btn"><svg class="icon" style="width:14px;height:14px"><use href="#i-chevleft"/></svg></button>
+              <button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button><button class="page-btn">4</button>
+              <span style="color:var(--wb-color-text-3)">…</span>
+              <button class="page-btn">625</button>
+              <button class="page-btn"><svg class="icon" style="width:14px;height:14px"><use href="#i-chevright"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="用户详情">
+  <div class="drawer__head">
+    <span class="drawer__title">用户详情</span>
+    <button class="drawer__close" onclick="closeDrawer()" aria-label="关闭"><svg class="icon icon--20"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="drawer__body">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+      <span class="avatar" style="width:56px;height:56px;font-size:20px">张</span>
+      <div><div style="font-size:16px;font-weight:600">张三</div><div style="font-size:13px;color:var(--wb-color-text-3)">zhangsan · 管理员</div></div>
+    </div>
+    <div class="detail-row"><span class="label">用户 ID</span><span class="value">USR-2026-0042</span></div>
+    <div class="detail-row"><span class="label">邮箱</span><span class="value">zhangsan@example.com</span></div>
+    <div class="detail-row"><span class="label">手机</span><span class="value">138****8888</span></div>
+    <div class="detail-row"><span class="label">角色</span><span class="value"><span class="tag tag--primary">管理员</span></span></div>
+    <div class="detail-row"><span class="label">状态</span><span class="value"><span class="tag tag--success"><span class="dot dot--on"></span>在线</span></span></div>
+    <div class="detail-row"><span class="label">注册时间</span><span class="value">2026-09-20 14:30</span></div>
+    <div class="detail-row"><span class="label">最近登录</span><span class="value">2 分钟前 · 上海</span></div>
+    <div class="detail-row"><span class="label">创建订单</span><span class="value">86 单</span></div>
+    <div class="detail-row" style="border:none"><span class="label">备注</span><span class="value">核心用户，2026 Q3 活跃度排名第一</span></div>
+  </div>
+  <div class="drawer__foot">
+    <button class="btn btn--default btn--md" onclick="closeDrawer()">关闭</button>
+    <button class="btn btn--primary btn--md" onclick="closeDrawer();showToast('success')">编辑</button>
+  </div>
+</aside>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+const html=document.documentElement;
+document.getElementById('themeToggle').addEventListener('click',function(){
+  const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  this.innerHTML='<svg class="icon"><use href="'+(next==='dark'?'#i-sun':'#i-moon')+'"/></svg>';
+  try{localStorage.setItem('wb-theme',next)}catch(e){}
+});
+(function(){let s;try{s=localStorage.getItem('wb-theme')}catch(e){}if(s){html.setAttribute('data-theme',s);document.getElementById('themeToggle').innerHTML='<svg class="icon"><use href="'+(s==='dark'?'#i-sun':'#i-moon')+'"/></svg>'}})();
+
+document.getElementById('chkAll').addEventListener('change',function(){
+  document.querySelectorAll('.row-chk').forEach(c=>c.checked=this.checked);updateBatch();
+});
+document.querySelectorAll('.row-chk').forEach(c=>c.addEventListener('change',updateBatch));
+function updateBatch(){const n=document.querySelectorAll('.row-chk:checked').length;document.getElementById('batchCount').textContent=n;document.getElementById('batchBar').style.display=n>0?'flex':'none'}
+function clearBatch(){document.querySelectorAll('.row-chk').forEach(c=>c.checked=false);document.getElementById('chkAll').checked=false;updateBatch()}
+
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('drawerOverlay').classList.add('open')}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerOverlay').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});
+
+const toastStack=document.getElementById('toastStack');
+function showToast(type){
+  const t=document.createElement('div');t.className='toast toast--'+type;
+  t.innerHTML='<span class="toast__icon"><svg class="icon" style="width:12px;height:12px"><use href="#'+(type==='success'?'i-check':'i-help')+'"/></svg></span><span>'+(type==='success'?'操作成功':'已处理')+'</span>';
+  toastStack.appendChild(t);
+  setTimeout(()=>{t.style.transition='opacity .3s,transform .3s';t.style.opacity='0';t.style.transform='translateX(120%)';setTimeout(()=>t.remove(),300)},2500);
+}
+</script>
+</body>
+</html>

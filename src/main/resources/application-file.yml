@@ -1,0 +1,10 @@
+# 无数据库模式：H2 文件与 schema 初始化完全停用，MyBatis 仓储 Bean 不装配
+mngr:
+  store:
+    mode: file
+spring:
+  datasource:
+    url: jdbc:h2:mem:mngr-unused
+  sql:
+    init:
+      mode: never

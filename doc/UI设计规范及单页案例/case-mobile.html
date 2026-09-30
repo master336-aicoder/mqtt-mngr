@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UI 规范案例 · 移动端工作台（v1.3）</title>
+<style>
+/* ========== 令牌层 v1.3 · 商务淡蓝 + 强化玻璃拟态 ========== */
+:root,[data-theme="light"]{
+  --wb-color-primary:#3B82F6;--wb-color-primary-hover:#2563EB;--wb-color-primary-active:#1D4ED8;--wb-color-primary-bg:#EFF6FF;
+  --wb-color-accent:#0EA5E9;
+  --wb-color-success:#10B981;--wb-color-warning:#F59E0B;--wb-color-danger:#EF4444;--wb-color-info:#64748B;
+  --wb-color-bg:#F8FAFC;--wb-color-surface:#FFFFFF;
+  --wb-glass-bg:rgba(255,255,255,.52);--wb-glass-border:rgba(255,255,255,.78);--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.45);
+  --wb-color-border:rgba(15,23,42,.08);--wb-color-border-hover:rgba(15,23,42,.16);
+  --wb-color-text:#0F172A;--wb-color-text-2:#475569;--wb-color-text-3:#64748B;--wb-color-text-disabled:#94A3B8;--wb-color-striping:rgba(15,23,42,.04);
+  --wb-font-family:system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  --wb-radius-sm:8px;--wb-radius-md:12px;--wb-radius-lg:16px;--wb-radius-xl:24px;--wb-radius-full:999px;
+  --wb-shadow-sm:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);
+  --wb-shadow-md:0 4px 16px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04);
+  --wb-shadow-lg:0 16px 48px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.06);
+  --wb-shadow-glow:0 8px 32px rgba(59,130,246,.35);
+  --wb-z-sticky:1100;--wb-z-message:1400;
+  --wb-motion-fast:120ms;--wb-motion-base:200ms;--wb-motion-slow:320ms;
+  --wb-motion-ease:cubic-bezier(.32,.72,0,1);--wb-motion-spring:cubic-bezier(.34,1.56,.64,1);
+  --wb-gradient:linear-gradient(135deg,#3B82F6 0%,#0EA5E9 100%);
+}
+[data-theme="dark"]{
+  --wb-color-primary:#60A5FA;--wb-color-primary-hover:#93C5FD;--wb-color-primary-active:#3B82F6;--wb-color-primary-bg:rgba(59,130,246,.18);
+  --wb-color-accent:#38BDF8;
+  --wb-color-success:#34D399;--wb-color-warning:#FBBF24;--wb-color-danger:#F87171;--wb-color-info:#94A3B8;
+  --wb-color-bg:#0B1120;--wb-color-surface:#111827;
+  --wb-glass-bg:rgba(30,41,59,.42);--wb-glass-border:rgba(255,255,255,.15);--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.10);
+  --wb-color-border:rgba(255,255,255,.10);--wb-color-border-hover:rgba(255,255,255,.20);
+  --wb-color-text:#F1F5F9;--wb-color-text-2:#CBD5E1;--wb-color-text-3:#94A3B8;--wb-color-text-disabled:#64748B;--wb-color-striping:rgba(255,255,255,.05);
+  --wb-shadow-sm:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.4);
+  --wb-shadow-md:0 4px 16px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3);
+  --wb-shadow-lg:0 16px 48px rgba(0,0,0,.55),0 4px 16px rgba(0,0,0,.4);
+  --wb-shadow-glow:0 8px 32px rgba(96,165,250,.45);
+  --wb-gradient:linear-gradient(135deg,#60A5FA 0%,#38BDF8 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--wb-font-family);font-size:14px;line-height:22px;background:#cbd5e1;color:var(--wb-color-text);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--wb-color-primary);outline-offset:2px}
+.icon{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block}
+.icon--20{width:20px;height:20px}
+.icon--24{width:24px;height:24px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* 手机外壳 */
+.phone-frame{position:relative;width:375px;height:812px;margin:24px auto;border-radius:44px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 0 11px #1a1a1a,0 0 0 12px #333,0 28px 72px rgba(15,23,42,.4);
+  background:
+    radial-gradient(circle at 0% 0%,rgba(59,130,246,.18),transparent 42%),
+    radial-gradient(circle at 100% 8%,rgba(14,165,233,.18),transparent 42%),
+    radial-gradient(circle at 50% 100%,rgba(125,211,252,.13),transparent 55%),
+    var(--wb-color-bg)}
+[data-theme="dark"] .phone-frame{background:
+    radial-gradient(circle at 0% 0%,rgba(59,130,246,.30),transparent 45%),
+    radial-gradient(circle at 100% 8%,rgba(14,165,233,.27),transparent 45%),
+    radial-gradient(circle at 50% 100%,rgba(125,211,252,.18),transparent 55%),
+    var(--wb-color-bg)}
+.phone-notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:26px;background:#1a1a1a;border-radius:0 0 16px 16px;z-index:9999}
+.phone-status{height:46px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 24px 4px;font-size:13px;font-weight:600;flex-shrink:0}
+
+.app{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+/* 导航栏（玻璃） */
+.navbar{height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;flex-shrink:0;position:sticky;top:0;z-index:var(--wb-z-sticky);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));
+  border-bottom:1px solid var(--wb-color-border)}
+.navbar__btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;background:none;color:var(--wb-color-text);cursor:pointer;border-radius:var(--wb-radius-sm);transition:background var(--wb-motion-fast)}
+.navbar__btn:active{background:var(--wb-color-striping)}
+.navbar__title{font-size:16px;font-weight:600;letter-spacing:-.01em}
+
+.scroll{flex:1;overflow-y:auto}
+.scroll::-webkit-scrollbar{display:none}
+
+/* 问候区（品牌渐变） */
+.greeting{padding:20px 16px 44px;background:var(--wb-gradient);color:#fff;position:relative;overflow:hidden}
+.greeting::after{content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.10)}
+.greeting__hello{font-size:13px;opacity:.9;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.greeting__name{font-size:20px;font-weight:600;letter-spacing:-.014em;margin-bottom:18px}
+.greeting__stats{display:flex;gap:10px;position:relative;z-index:1}
+.greeting__stat{flex:1;background:rgba(255,255,255,.16);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.22);border-radius:var(--wb-radius-md);padding:10px 12px}
+.greeting__stat .num{font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.greeting__stat .lbl{font-size:11px;opacity:.9}
+
+/* 快捷宫格（玻璃上浮） */
+.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:-32px 12px 0;padding:10px 6px;border-radius:var(--wb-radius-lg);position:relative;z-index:2;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md)}
+.quick-item{display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px 2px;cursor:pointer;transition:transform var(--wb-motion-fast) var(--wb-motion-ease)}
+.quick-item:active{transform:scale(.92)}
+.quick-item__icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.quick-item__label{font-size:11px;color:var(--wb-color-text-2)}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;padding:20px 16px 10px}
+.section-head__title{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.section-head__more{font-size:12px;color:var(--wb-color-text-3);display:flex;align-items:center;gap:2px}
+
+/* 任务卡片（玻璃） */
+.task-list{padding:0 12px}
+.task-card{padding:14px;margin-bottom:10px;border-radius:var(--wb-radius-md);display:flex;gap:12px;cursor:pointer;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md);
+  transition:transform var(--wb-motion-base) var(--wb-motion-ease)}
+.task-card:active{transform:scale(.975)}
+.task-card__bar{width:4px;border-radius:2px;flex-shrink:0}
+.task-card__bar--urgent{background:linear-gradient(180deg,#EF4444,#F87171)}
+.task-card__bar--normal{background:var(--wb-gradient)}
+.task-card__bar--low{background:linear-gradient(180deg,#94A3B8,#CBD5E1)}
+.task-card__body{flex:1;min-width:0}
+.task-card__title{font-size:14px;font-weight:600;margin-bottom:7px;display:flex;align-items:center;gap:6px}
+.task-card__meta{display:flex;align-items:center;gap:12px;font-size:11px;color:var(--wb-color-text-3);flex-wrap:wrap}
+.task-card__meta span{display:inline-flex;align-items:center;gap:3px}
+.task-card__right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0}
+
+.tag{display:inline-flex;align-items:center;padding:1px 7px;font-size:10px;border-radius:6px;line-height:16px;white-space:nowrap;font-weight:500}
+.tag--success{color:var(--wb-color-success);background:rgba(16,185,129,.14)}
+.tag--warning{color:var(--wb-color-warning);background:rgba(245,158,11,.14)}
+.tag--danger{color:var(--wb-color-danger);background:rgba(239,68,68,.14)}
+.tag--info{color:var(--wb-color-info);background:rgba(100,116,139,.14)}
+.tag--primary{color:var(--wb-color-primary);background:var(--wb-color-primary-bg)}
+
+.progress{width:56px;height:5px;background:var(--wb-color-striping);border-radius:var(--wb-radius-full);overflow:hidden}
+.progress__fill{height:100%;border-radius:var(--wb-radius-full);background:var(--wb-gradient)}
+
+/* 浮动按钮 */
+.fab{position:absolute;right:16px;bottom:78px;width:52px;height:52px;border-radius:16px;border:none;color:#fff;cursor:pointer;z-index:var(--wb-z-sticky);
+  background:var(--wb-gradient);box-shadow:var(--wb-shadow-glow);display:flex;align-items:center;justify-content:center;
+  transition:transform var(--wb-motion-base) var(--wb-motion-spring)}
+.fab:active{transform:scale(.9)}
+
+/* TabBar（玻璃） */
+.tabbar{height:58px;display:flex;flex-shrink:0;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border-top:1px solid var(--wb-color-border)}
+.tabbar__item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--wb-color-text-3);font-size:10px;position:relative;transition:color var(--wb-motion-fast)}
+.tabbar__item.active{color:var(--wb-color-primary)}
+.tabbar__item.active .icon{stroke-width:2}
+.tabbar__badge{position:absolute;top:8px;right:50%;margin-right:-16px;min-width:7px;height:7px;background:var(--wb-color-danger);border-radius:50%}
+
+/* 下拉刷新 */
+.refresh-hint{height:0;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;background:var(--wb-gradient);transition:height var(--wb-motion-base) var(--wb-motion-ease)}
+.refresh-hint.show{height:44px}
+
+/* 空状态 */
+.empty{text-align:center;padding:24px 20px;color:var(--wb-color-text-3)}
+.empty__icon{width:56px;height:56px;margin:0 auto 10px;border-radius:16px;background:var(--wb-color-primary-bg);color:var(--wb-color-primary);display:flex;align-items:center;justify-content:center}
+.empty__text{font-size:13px}
+
+/* Toast */
+.toast{position:absolute;top:64px;left:50%;transform:translateX(-50%) translateY(-8px);padding:11px 20px;background:rgba(15,23,42,.88);backdrop-filter:blur(8px);color:#fff;border-radius:var(--wb-radius-full);font-size:13px;z-index:var(--wb-z-message);opacity:0;transition:all var(--wb-motion-base) var(--wb-motion-spring);white-space:nowrap;display:flex;align-items:center;gap:8px}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.theme-fab{position:absolute;top:56px;right:12px;width:36px;height:36px;border-radius:50%;cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;color:var(--wb-color-text-2);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-chevleft" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevright" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 13 2 2 4-4"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+</svg>
+
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-status"><span>9:15</span><span style="font-size:12px">5G ▮▮▮</span></div>
+  <button class="theme-fab" id="themeToggle" aria-label="切换主题"><svg class="icon"><use href="#i-moon"/></svg></button>
+
+  <div class="app">
+    <nav class="navbar">
+      <button class="navbar__btn" aria-label="返回"><svg class="icon icon--20"><use href="#i-chevleft"/></svg></button>
+      <span class="navbar__title">我的工作台</span>
+      <button class="navbar__btn" aria-label="更多"><svg class="icon icon--20"><use href="#i-more"/></svg></button>
+    </nav>
+
+    <div class="scroll" id="scrollArea">
+      <div class="refresh-hint" id="refreshHint">下拉刷新</div>
+
+      <div class="greeting">
+        <div class="greeting__hello"><svg class="icon" style="width:14px;height:14px"><use href="#i-sparkle"/></svg>早上好</div>
+        <div class="greeting__name">张三，今天有 5 个待办</div>
+        <div class="greeting__stats">
+          <div class="greeting__stat"><div class="num">5</div><div class="lbl">待办任务</div></div>
+          <div class="greeting__stat"><div class="num">12</div><div class="lbl">本周完成</div></div>
+          <div class="greeting__stat"><div class="num">3</div><div class="lbl">需审批</div></div>
+        </div>
+      </div>
+
+      <div class="quick-grid">
+        <div class="quick-item" onclick="showToast('已打开待办')"><div class="quick-item__icon" style="background:rgba(59,130,246,.12);color:#3B82F6"><svg class="icon icon--20"><use href="#i-clipboard"/></svg></div><span class="quick-item__label">待办</span></div>
+        <div class="quick-item" onclick="showToast('已打开已完成')"><div class="quick-item__icon" style="background:rgba(16,185,129,.12);color:#10B981"><svg class="icon icon--20"><use href="#i-check-circle"/></svg></div><span class="quick-item__label">已完成</span></div>
+        <div class="quick-item" onclick="showToast('已打开到期')"><div class="quick-item__icon" style="background:rgba(245,158,11,.12);color:#F59E0B"><svg class="icon icon--20"><use href="#i-clock"/></svg></div><span class="quick-item__label">即将到期</span></div>
+        <div class="quick-item" onclick="showToast('已打开统计')"><div class="quick-item__icon" style="background:rgba(14,165,233,.12);color:#0EA5E9"><svg class="icon icon--20"><use href="#i-chart"/></svg></div><span class="quick-item__label">统计</span></div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-head__title">待办任务</span>
+        <span class="section-head__more">全部<svg class="icon" style="width:14px;height:14px"><use href="#i-chevright"/></svg></span>
+      </div>
+
+      <div class="task-list">
+        <div class="task-card" onclick="showToast('已打开详情')">
+          <div class="task-card__bar task-card__bar--urgent"></div>
+          <div class="task-card__body">
+            <div class="task-card__title">产品需求评审 <span class="tag tag--danger">紧急</span></div>
+            <div class="task-card__meta"><span><svg class="icon" style="width:12px;height:12px"><use href="#i-folder"/></svg>产品部</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-clock"/></svg>今天 14:00</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-user"/></svg>李四</span></div>
+          </div>
+          <div class="task-card__right"><span class="tag tag--warning">进行中</span><div class="progress"><div class="progress__fill" style="width:60%"></div></div></div>
+        </div>
+
+        <div class="task-card" onclick="showToast('已打开详情')">
+          <div class="task-card__bar task-card__bar--normal"></div>
+          <div class="task-card__body">
+            <div class="task-card__title">季度财务报告整理</div>
+            <div class="task-card__meta"><span><svg class="icon" style="width:12px;height:12px"><use href="#i-folder"/></svg>财务部</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-calendar"/></svg>明天截止</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-user"/></svg>王五</span></div>
+          </div>
+          <div class="task-card__right"><span class="tag tag--info">待开始</span><div class="progress"><div class="progress__fill" style="width:0%"></div></div></div>
+        </div>
+
+        <div class="task-card" onclick="showToast('已打开详情')">
+          <div class="task-card__bar task-card__bar--normal"></div>
+          <div class="task-card__body">
+            <div class="task-card__title">客户拜访 — 腾讯云</div>
+            <div class="task-card__meta"><span><svg class="icon" style="width:12px;height:12px"><use href="#i-folder"/></svg>销售部</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-calendar"/></svg>09-30 10:00</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-pin"/></svg>深圳</span></div>
+          </div>
+          <div class="task-card__right"><span class="tag tag--success">已完成</span><div class="progress"><div class="progress__fill" style="width:100%;background:var(--wb-color-success)"></div></div></div>
+        </div>
+
+        <div class="task-card" onclick="showToast('已打开详情')">
+          <div class="task-card__bar task-card__bar--low"></div>
+          <div class="task-card__body">
+            <div class="task-card__title">周会纪要归档</div>
+            <div class="task-card__meta"><span><svg class="icon" style="width:12px;height:12px"><use href="#i-folder"/></svg>行政部</span><span><svg class="icon" style="width:12px;height:12px"><use href="#i-calendar"/></svg>本周内</span></div>
+          </div>
+          <div class="task-card__right"><span class="tag tag--info">低优先</span><div class="progress"><div class="progress__fill" style="width:30%"></div></div></div>
+        </div>
+      </div>
+
+      <div class="section-head"><span class="section-head__title">已逾期</span></div>
+      <div class="empty">
+        <div class="empty__icon"><svg class="icon icon--24"><use href="#i-inbox"/></svg></div>
+        <div class="empty__text">暂无逾期任务，干得漂亮</div>
+      </div>
+
+      <div style="height:90px"></div>
+    </div>
+
+    <button class="fab" onclick="showToast('新建任务')" aria-label="新建任务"><svg class="icon icon--24"><use href="#i-plus"/></svg></button>
+    <div class="toast" id="toast"></div>
+
+    <nav class="tabbar">
+      <div class="tabbar__item active"><svg class="icon icon--20"><use href="#i-home"/></svg>首页</div>
+      <div class="tabbar__item" onclick="showToast('待办')"><svg class="icon icon--20"><use href="#i-clipboard"/></svg>待办</div>
+      <div class="tabbar__item" onclick="showToast('消息')"><svg class="icon icon--20"><use href="#i-message"/></svg>消息<span class="tabbar__badge"></span></div>
+      <div class="tabbar__item" onclick="showToast('我的')"><svg class="icon icon--20"><use href="#i-user"/></svg>我的</div>
+    </nav>
+  </div>
+</div>
+
+<script>
+const html=document.documentElement;
+document.getElementById('themeToggle').addEventListener('click',function(){
+  const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  this.innerHTML='<svg class="icon"><use href="'+(next==='dark'?'#i-sun':'#i-moon')+'"/></svg>';
+  try{localStorage.setItem('wb-theme',next)}catch(e){}
+});
+(function(){let s;try{s=localStorage.getItem('wb-theme')}catch(e){}if(s){html.setAttribute('data-theme',s);document.getElementById('themeToggle').innerHTML='<svg class="icon"><use href="'+(s==='dark'?'#i-sun':'#i-moon')+'"/></svg>'}})();
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML='<svg class="icon" style="width:14px;height:14px"><use href="#i-check"/></svg>'+msg;
+  t.classList.add('show');clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+const scroll=document.getElementById('scrollArea'),hint=document.getElementById('refreshHint');
+let startY=0,pulling=false;
+scroll.addEventListener('touchstart',e=>{if(scroll.scrollTop===0){startY=e.touches[0].clientY;pulling=true;hint.textContent='下拉刷新'}});
+scroll.addEventListener('touchmove',e=>{if(pulling){const d=e.touches[0].clientY-startY;if(d>0){hint.style.height=Math.min(d,60)+'px';if(d>50)hint.textContent='松开立即刷新'}}});
+scroll.addEventListener('touchend',()=>{if(pulling){pulling=false;const h=parseInt(hint.style.height)||0;if(h>50){hint.textContent='刷新中…';setTimeout(()=>{hint.style.height='0';showToast('已刷新')},900)}else{hint.style.height='0'}}});
+</script>
+</body>
+</html>

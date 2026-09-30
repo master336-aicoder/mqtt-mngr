@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mqtt-mngr · Kafka &amp; EMQX 统一消息管理台</title>
+<link rel="stylesheet" href="styles.css">
+<style>[v-cloak]{display:none!important}</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-server" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><path d="M6 6h.01M6 18h.01M12 6h2M12 18h2"/></symbol>
+  <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+  <symbol id="i-network" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4M12 12H5v4M12 12h7v4"/></symbol>
+  <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M4.9 19.1C2.5 16.7 2.5 12.8 4.9 9.9M7.8 16.2c-1.6-1.6-1.6-4.8 0-7.1M16.2 7.8c1.6 1.6 1.6 4.8 0 7.1M19.1 4.9c2.4 2.4 2.4 6.3 0 9.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-chevleft" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevright" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3" fill="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1" fill="none"/><rect x="14" y="4" width="4" height="16" rx="1" fill="none"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M12 20V10M18 20V4M6 20v-4"/></symbol>
+  <symbol id="i-trend-up" viewBox="0 0 24 24"><path d="M22 7 13.5 15.5 8.5 10.5 2 17"/><path d="M16 7h6v6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 24 24"><path d="m3 21 12-12M15 9l-6-6 3-3 6 6M9 15l-6-6 3-3 6 6"/><path d="M18 14h3v3M14 6h3v3"/></symbol>
+</svg>
+
+<div id="app" class="app" v-cloak>
+  <header class="topbar">
+    <div class="topbar__logo"><span class="mark"><svg class="icon"><use href="#i-layers"/></svg></span>MQTT 消息管理台 · Mngr</div>
+    <div class="topbar__search"><span class="ico"><svg class="icon"><use href="#i-search"/></svg></span><input placeholder="搜索 Server、Topic、模板…" @keydown.enter="globalSearch" v-model="globalKeyword"></div>
+    <div class="topbar__right">
+      <button class="theme-toggle" @click="toggleTheme" :aria-label="'切换主题'"><svg class="icon"><use :href="theme==='dark'?'#i-sun':'#i-moon'"/></svg></button>
+      <button class="icon-btn" aria-label="死信" @click="go('dlq')"><svg class="icon icon--20"><use href="#i-bell"/></svg><span class="badge" v-if="dlqTotal>0">{{ dlqTotal }}</span></button>
+      <button class="icon-btn" aria-label="令牌" @click="openToken()"><svg class="icon icon--20"><use href="#i-key"/></svg></button>
+      <button class="avatar" aria-label="当前用户" @click="go('settings')">A</button>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="sidebar">
+      <template v-for="g in navGroups" :key="g.title">
+        <div class="sidebar__group-title">{{ g.title }}</div>
+        <div v-for="it in g.items" :key="it.route" class="sidebar__item" :class="{active:route===it.route}" @click="go(it.route)">
+          <svg class="icon"><use :href="'#i-'+it.icon"/></svg>{{ it.label }}
+          <span v-if="it.route==='dlq' && dlqTotal>0" style="margin-left:auto"><span class="tag tag--danger num">{{ dlqTotal }}</span></span>
+        </div>
+      </template>
+    </aside>
+
+    <main class="content">
+      <div class="content__head"><nav class="breadcrumb" v-html="meta[0]"></nav></div>
+      <div class="content__title"><span>{{ meta[1] }}</span>
+        <span style="display:flex;gap:8px">
+          <button class="btn btn--primary btn--md" @click="reload"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button>
+        </span>
+      </div>
+      <div class="content__desc">{{ meta[2] }}</div>
+      <div class="content__body">
+
+      <!-- ============ 监控总览 ============ -->
+      <section class="view active" v-show="route==='dashboard'">
+        <div class="stats">
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">在线 Server</span><span class="stat-card__icon"><svg class="icon"><use href="#i-server"/></svg></span></div>
+            <div class="stat-card__value">{{ ov.serverStats ? ov.serverStats.connected : '-' }}/{{ ov.serverStats ? ov.serverStats.total : '-' }}</div>
+            <div class="stat-card__trend">降级 {{ ov.serverStats ? ov.serverStats.unstable : 0 }} · 离线 {{ ov.serverStats ? ov.serverStats.down : 0 }}</div></div>
+          <div class="stat-card"><div class="stat-card__top"><span class="stat-card__label">运行订阅</span><span class="stat-card__icon"><svg class="icon"><use href="#i-radio"/></svg></span></div>
+            <div class="stat-card__value">{{ runningSubs }}</div><div class="stat-card__trend">WS 会话 {{ ov.wsSessions != null ? ov.wsSessions : '-' }}</div></div>
+          <div class="stat-card stat-card--warn"><div class="stat-card__top"><span class="stat-card__label">发布缓冲</span><span class="stat-card__icon"><svg class="icon"><use href="#i-clock"/></svg></span></div>
+            <div class="stat-card__value">{{ totalBuffers }}</div><div class="stat-card__trend">待发送/重试消息数</div></div>
+          <div class="stat-card stat-card--danger"><div class="stat-card__top"><span class="stat-card__label">死信 DLQ</span><span class="stat-card__icon"><svg class="icon"><use href="#i-warn"/></svg></span></div>
+            <div class="stat-card__value">{{ dlqTotal }}</div><div class="stat-card__trend"><a href="javascript:;" @click="go('dlq')">前往处理</a></div></div>
+        </div>
+
+        <div class="banner banner--info"><svg class="icon"><use href="#i-db"/></svg>存储模式 <b>{{ ov.storeMode || '-' }}</b> ·
+          能力 {{ (ov.runtimeCapabilities||[]).join(' / ') || '-' }} · allowAdminOps = {{ ov.allowAdminOps }} · v{{ ov.version }}</div>
+
+        <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-server"/></svg>Server 健康</span><span class="muted" style="font-size:12px">点击卡片进入服务连接</span></div>
+          <div class="panel__body grid-3">
+            <div class="server-card" v-for="s in (ov.servers||[])" :key="s.id" @click="go('servers')" style="cursor:pointer">
+              <div class="server-card__head"><span class="server-card__name"><span class="server-card__proto" :class="s.protocol==='KAFKA'?'proto-k':'proto-m'">{{ s.protocol==='KAFKA'?'K':'M' }}</span>{{ s.name }}</span>
+                <span class="tag" :class="stateTag(s.state).cls"><span class="dot" :class="stateTag(s.state).dot"></span>{{ stateTag(s.state).label }}</span></div>
+              <div class="server-card__meta mono">{{ s.id }} · {{ s.protocol }}<br>{{ s.enabled?'启用':'已停用' }}</div>
+              <div class="progress"><span :style="{width:statePct(s.state)+'%',background:s.state==='DOWN'?'var(--wb-color-danger)':''}"></span></div>
+            </div>
+            <div class="empty" v-if="!(ov.servers||[]).length"><svg class="icon"><use href="#i-server"/></svg>尚未注册 Server</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-radio"/></svg>订阅状态</span></div>
+            <div class="panel__body" style="padding:0">
+              <div class="table-wrap" style="border:none;border-radius:0"><table class="tbl"><thead><tr><th>订阅</th><th>Server</th><th>Topic</th><th>状态</th><th>队列</th></tr></thead><tbody>
+                <tr v-for="sb in (ov.subscriptions||[])" :key="sb.subId"><td class="mono">{{ sb.subId }}</td><td>{{ sb.serverId }}</td><td class="mono">{{ sb.topic }}</td>
+                  <td><span class="tag" :class="sb.state==='RUNNING'?'tag--success':'tag--warning'">{{ sb.state }}</span></td><td class="num">{{ sb.queueSize }}</td></tr>
+                <tr v-if="!(ov.subscriptions||[]).length"><td colspan="4" class="muted">无正式订阅</td></tr>
+              </tbody></table></div>
+            </div>
+          </div>
+          <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-chart"/></svg>发布缓冲 / Server</span></div>
+            <div class="panel__body">
+              <div class="score-row" v-for="(v,k) in (ov.publishBuffers||{})" :key="k"><span class="mono">{{ k }}</span><span class="progress"><span :style="{width:Math.min(100,Math.round(v/50))+'%'}"></span></span><span class="num" style="text-align:right">{{ v }}</span></div>
+              <div class="muted" v-if="!hasBuffers" style="font-size:12px">暂无待发数据</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-warn"/></svg>最近死信</span><button class="btn btn--text" @click="go('dlq')">查看全部</button></div>
+          <div class="table-wrap" style="border:none;border-radius:0"><table class="tbl"><thead><tr><th>时间</th><th>来源</th><th>类型</th><th>Topic</th><th>信息</th></tr></thead><tbody>
+            <tr v-for="d in dlqPreview"><td class="num muted">{{ fmt(d.createdAt) }}</td><td>{{ d.serverId }}</td><td><span class="tag tag--danger">死信</span></td><td class="mono">{{ d.topic }}</td><td>{{ d.errCode }} {{ d.errMsg }}</td></tr>
+            <tr v-if="!dlqPreview.length"><td colspan="5" class="muted">暂无死信</td></tr>
+          </tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ============ 服务连接 ============ -->
+      <section class="view active" v-show="route==='servers'">
+        <div class="toolbar">
+          <input class="input" placeholder="搜索名称 / ID" style="width:200px" v-model="srv.keyword" @keydown.enter="loadServers">
+          <select class="select" v-model="srv.protocol" @change="loadServers"><option value="">全部协议</option><option value="KAFKA">Kafka</option><option value="MQTT">MQTT</option></select>
+          <span class="spacer"></span>
+          <button class="btn btn--default btn--sm" @click="exportJson('servers', servers)"><svg class="icon"><use href="#i-download"/></svg>导出配置</button>
+          <button class="btn btn--primary btn--sm" @click="openServer(null)"><svg class="icon"><use href="#i-plus"/></svg>注册 Server</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>名称 / ID</th><th>协议</th><th>地址</th><th>连接模式</th><th>状态</th><th>重连</th><th>凭据</th><th>更新时间</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="s in servers" :key="s.id">
+              <td><b>{{ s.name }}</b><br><span class="mono muted">{{ s.id }}</span></td>
+              <td><span class="tag" :class="s.protocol==='KAFKA'?'tag--primary':'tag--accent'">{{ s.protocol }}</span></td>
+              <td class="mono">{{ connAddr(s) }}</td>
+              <td>{{ s.connMode }}</td>
+              <td><span class="tag" :class="stateTag(s.runtime.state).cls"><span class="dot" :class="stateTag(s.runtime.state).dot"></span>{{ stateTag(s.runtime.state).label }}</span>
+                <div class="muted" v-if="s.runtime.lastError" :title="s.runtime.lastError" style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.runtime.lastError }}</div></td>
+              <td class="num">{{ s.runtime.retryCount }}</td>
+              <td><span class="tag tag--info" v-if="s.hasCredentials">{{ s.credentialKeys.join(',') }}</span><span class="muted" v-else>—</span></td>
+              <td class="muted">{{ fmt(s.updatedAt) }}</td>
+              <td class="col-actions">
+                <button class="btn btn--text" @click="jsonModal('Server '+s.id, s)">详情</button>
+                <button class="btn btn--text" v-if="s.runtime.state==='CONNECTED'||s.runtime.state==='DEGRADED'" @click="serverOp(s,'disconnect')">断开</button>
+                <button class="btn btn--text" v-else @click="serverOp(s,'connect')">连接</button>
+                <button class="btn btn--text" @click="openServer(s)">编辑</button>
+                <button class="btn btn--text danger" @click="delServer(s)">删除</button>
+              </td>
+            </tr>
+            <tr v-if="!servers.length"><td colspan="9" class="muted">暂无 Server，点击右上角注册</td></tr>
+          </tbody></table>
+          <div class="pagination"><span>共 {{ servers.length }} 条</span><div class="pagination__pages"><button class="page-btn active">1</button></div></div>
+        </div>
+      </section>
+
+      <!-- ============ Topic 管理 ============ -->
+      <section class="view active" v-show="route==='topics'">
+        <div class="banner banner--info"><svg class="icon"><use href="#i-server"/></svg>当前 Server 上下文：
+          <select class="select" style="margin-left:8px" v-model="topic.serverId" @change="loadTopics">
+            <option value="">（选择 Server）</option>
+            <option v-for="s in servers" :value="s.id">{{ s.name }}（{{ s.protocol }}）</option>
+          </select>
+          <span class="muted">（切换 Server 将同步集群管理与调试台）</span></div>
+        <div class="toolbar">
+          <input class="input" placeholder="搜索 Topic 名称 / 模式" style="width:240px" v-model="topic.keyword" @keydown.enter="loadTopics">
+          <span class="spacer"></span>
+          <button class="btn btn--default btn--sm" @click="browseTopics"><svg class="icon"><use href="#i-network"/></svg>Broker 浏览</button>
+          <button class="btn btn--primary btn--sm" @click="openTopic(null)"><svg class="icon"><use href="#i-plus"/></svg>登记 Topic</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th>Topic</th><th>方向</th><th>格式</th><th>QoS</th><th>默认模板</th><th>自动匹配</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="t in topics" :key="t.id">
+              <td class="mono">{{ t.namePattern }}</td>
+              <td><span class="tag" :class="t.direction==='SUB'?'tag--primary':(t.direction==='PUB'?'tag--info':'tag--accent')">{{ dirLabel(t.direction) }}</span></td>
+              <td>{{ t.format }}</td><td class="num">{{ t.qos != null ? t.qos : '—' }}</td>
+              <td><span class="tag" :class="t.templateId?'tag--success':'tag--info'">{{ t.templateId || '未绑定' }}</span></td>
+              <td>{{ t.autoMatch ? '开' : '关' }}</td>
+              <td class="col-actions"><button class="btn btn--text" @click="openTopic(t)">编辑</button><button class="btn btn--text danger" @click="delTopic(t)">删除</button></td>
+            </tr>
+            <tr v-if="!topics.length"><td colspan="7" class="muted">暂无 Topic</td></tr>
+          </tbody></table>
+        </div>
+      </section>
+
+      <!-- ============ 集群管理 ============ -->
+      <section class="view active" v-show="route==='cluster'">
+        <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:16px">
+          <span class="muted" style="font-size:13px">Server</span>
+          <select class="select" v-model="cl.serverId" @change="loadCluster">
+            <option v-for="s in servers" :value="s.id">{{ s.name }}（{{ s.protocol }}）</option>
+          </select>
+          <span class="tag tag--info" v-if="clServer"><svg class="icon icon--14"><use href="#i-key"/></svg>allowAdminOps = {{ clAdminOps }}</span>
+          <span class="spacer"></span>
+          <button class="btn btn--default btn--sm" @click="loadCluster"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button>
+        </div>
+        <div class="banner banner--warn" v-if="cl.error"><svg class="icon"><use href="#i-warn"/></svg>{{ cl.error }}</div>
+
+        <div class="tabs">
+          <div class="tab" :class="{active:cl.tab===t.key}" v-for="t in clTabs" :key="t.key" @click="cl.tab=t.key; loadClusterTab()">{{ t.label }}</div>
+        </div>
+
+        <!-- Kafka 概览 -->
+        <div v-show="cl.tab==='ck'">
+          <div class="panel" v-if="cl.overview"><div class="panel__head"><span class="panel__title">Kafka 集群</span></div><div class="panel__body">
+            <div class="detail-row" v-for="(v,k) in overviewRows(cl.overview)" :key="k"><span class="label">{{ k }}</span><span class="value mono">{{ v }}</span></div>
+          </div></div>
+          <div class="empty" v-else-if="!cl.loading"><svg class="icon"><use href="#i-network"/></svg>无数据（Server 需已连接且开启管理面）</div>
+        </div>
+
+        <!-- Kafka Topics -->
+        <div v-show="cl.tab==='ct'">
+          <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:12px"><span class="spacer"></span>
+            <button class="btn btn--primary btn--sm" @click="openCreateTopic"><svg class="icon"><use href="#i-plus"/></svg>新建 Topic</button></div>
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>Topic</th><th>分区</th><th>副本</th><th>内部</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="t in cl.topics" :key="t.topic">
+              <td class="mono">{{ t.topic }}</td><td class="num">{{ t.partitions }}</td><td class="num">{{ t.replicationFactor }}</td>
+              <td><span class="tag tag--info" v-if="t.internal">内部</span><span v-else>—</span></td>
+              <td class="col-actions">
+                <button class="btn btn--text" @click="kafkaTopicDetail(t.topic)">配置</button>
+                <button class="btn btn--text" v-if="!t.internal" @click="openAddPartitions(t)">扩容分区</button>
+                <button class="btn btn--text danger" v-if="!t.internal" @click="delKafkaTopic(t)">删除</button>
+              </td></tr>
+            <tr v-if="!cl.topics.length"><td colspan="5" class="muted">无数据</td></tr>
+          </tbody></table></div>
+        </div>
+
+        <!-- Kafka 消费组 -->
+        <div v-show="cl.tab==='cg'">
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>GroupId</th><th>状态</th><th>类型</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="g in cl.groups" :key="g.groupId">
+              <td class="mono">{{ g.groupId }}</td>
+              <td><span class="tag" :class="g.state==='STABLE'?'tag--success':'tag--warning'">{{ g.state }}</span></td>
+              <td>{{ g.simpleConsumerGroup ? 'Simple' : 'Classic' }}</td>
+              <td class="col-actions">
+                <button class="btn btn--text" @click="kafkaGroupDetail(g)">Lag 详情</button>
+                <button class="btn btn--text danger" @click="openResetOffsets(g)">重置 offset（危险）</button></td></tr>
+            <tr v-if="!cl.groups.length"><td colspan="4" class="muted">无消费组</td></tr>
+          </tbody></table></div>
+          <div class="panel" v-if="cl.groupDetail" style="margin-top:16px"><div class="panel__head"><span class="panel__title">组 {{ cl.groupDetail.groupId }} · 总 Lag {{ cl.groupDetail.totalLag }}</span></div><div class="panel__body">
+            <div class="score-row" v-for="(lag,tp) in (cl.groupDetail.lagByTopic||{})" :key="tp"><span class="mono">{{ tp }}</span>
+              <span class="progress"><span :style="{width:Math.min(100,Math.round(lag/1000))+'%',background:lag>=100000?'var(--wb-color-danger)':(lag>=1000?'var(--wb-color-warning)':'var(--wb-color-success)')}"></span></span>
+              <span class="num" style="text-align:right">{{ lag }}</span></div>
+            <div class="muted" style="font-size:12px;margin-top:8px">成员：{{ (cl.groupDetail.members||[]).map(m=>m.clientId||m.memberId).join(', ') || '—' }}
+              <span v-if="cl.groupDetail.offsetsError"> · offset 读取失败: {{ cl.groupDetail.offsetsError }}</span></div>
+          </div></div>
+        </div>
+
+        <!-- Kafka ACL（未开放） -->
+        <div v-show="cl.tab==='ca'">
+          <div class="empty"><svg class="icon"><use href="#i-key"/></svg>ACL 管理在当前版本未开放（K2 降级），请通过 Broker 原生工具维护</div>
+        </div>
+
+        <!-- EMQX 概览/节点 -->
+        <div v-show="cl.tab==='en'">
+          <div class="panel" v-if="cl.overview" style="margin-bottom:16px"><div class="panel__head"><span class="panel__title">EMQX 概览</span></div><div class="panel__body">
+            <div class="detail-row" v-for="(v,k) in overviewRows(cl.overview)" :key="k"><span class="label">{{ k }}</span><span class="value mono">{{ v }}</span></div>
+          </div></div>
+          <div class="grid-2">
+            <div class="server-card" v-for="n in cl.nodes" :key="n.node">
+              <div class="server-card__head"><span class="server-card__name"><span class="server-card__proto proto-m" style="width:20px;height:20px;border-radius:6px;font-size:10px">M</span>{{ n.node }}</span><span class="tag tag--success"><span class="dot dot--pulse"></span>运行中</span></div>
+              <div class="server-card__meta">版本 {{ n.version }} · 运行 {{ Math.floor((n.uptimeSeconds||0)/86400) }}d<br>连接 {{ n.connections }} · 内存 {{ n.memoryUsed }}</div>
+            </div>
+          </div>
+          <div class="empty" v-if="!cl.nodes.length && !cl.overview"><svg class="icon"><use href="#i-server"/></svg>无数据：需 EMQX mgmt 凭据（baseUrl + mgmtPassword）且 Server 已连接</div>
+          <div class="banner banner--info" v-if="(cl.supported||[]).length" style="margin-top:16px"><svg class="icon"><use href="#i-check"/></svg>支持的操作：{{ cl.supported.join(' / ') }}</div>
+        </div>
+
+        <!-- EMQX 客户端 -->
+        <div v-show="cl.tab==='ec'">
+          <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:12px"><input class="input" placeholder="clientId 过滤" style="width:240px" v-model="cl.clientFilter" @keydown.enter="loadClusterTab">
+            <button class="btn btn--default btn--sm" @click="loadClusterTab"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button></div>
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>ClientID</th><th>IP</th><th>协议</th><th>Keepalive</th><th>订阅数</th><th>连接时间</th></tr></thead><tbody>
+            <tr v-for="(c,i) in cl.clients" :key="i">
+              <td class="mono">{{ c.clientId }}</td><td class="mono">{{ c.ipAddress }}</td><td>{{ c.protoVer===5?'5.0':'3.1.1' }}</td>
+              <td class="num">{{ c.keepalive }}s</td><td class="num">{{ c.subscriptions }}</td><td class="muted">{{ c.connectedAt }}</td></tr>
+            <tr v-if="!cl.clients.length"><td colspan="6" class="muted">无数据（需 EMQX Dashboard API 凭据）</td></tr>
+          </tbody></table></div>
+        </div>
+
+        <!-- EMQX Topics/Retained -->
+        <div v-show="cl.tab==='er'">
+          <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>Topic</th><th>订阅者</th><th>消息入</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="(t,i) in cl.mqttTopics" :key="i"><td class="mono">{{ t.topic }}</td><td class="num">{{ t.subscriberCount }}</td><td class="num">{{ t.messagesIn }}</td>
+              <td class="col-actions"><button class="btn btn--text danger" @click="clearRetained(t)">清 Retained（危险）</button></td></tr>
+            <tr v-if="!cl.mqttTopics.length"><td colspan="4" class="muted">无数据</td></tr>
+          </tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ============ 消息模板 ============ -->
+      <section class="view active" v-show="route==='templates'">
+        <div style="display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:start">
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title">模板列表</span><button class="btn btn--primary btn--sm" @click="openNewTpl"><svg class="icon"><use href="#i-plus"/></svg></button></div>
+            <div style="padding:8px 10px;border-bottom:1px solid var(--wb-color-border)"><input class="input" placeholder="搜索模板" style="width:100%" v-model="tpl.keyword" @keydown.enter="loadTemplates"></div>
+            <div class="feed" style="max-height:none">
+              <div class="feed-item" :class="{open:tpl.current && tpl.current.id===t.id}" v-for="t in templates" :key="t.id" style="cursor:pointer" @click="selectTemplate(t)">
+                <div class="feed-item__top"><svg class="icon"><use href="#i-file-text"/></svg><b>{{ t.name }}</b><span class="muted mono" style="font-size:11px;margin-left:auto">v{{ t.version }}</span></div>
+                <div class="muted mono" style="font-size:11px">{{ t.id }} · {{ t.status }}</div>
+              </div>
+              <div class="empty" v-if="!templates.length"><svg class="icon"><use href="#i-file-text"/></svg>暂无模板</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin:0" v-if="tpl.current">
+            <div class="panel__head"><div><span class="panel__title">{{ tpl.current.name }} <span class="tag tag--primary">v{{ tpl.current.version }} · {{ tpl.current.status }}</span></span>
+              <div class="muted mono" style="font-size:12px;font-weight:400;margin-top:2px">{{ tpl.current.id }} · {{ (tpl.current.fields||[]).length }} 字段 · {{ tpl.current.referenced?'已被引用':'未被引用' }}</div></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn--default btn--sm" @click="openInfer"><svg class="icon"><use href="#i-wand"/></svg>样例反推</button>
+                <button class="btn btn--default btn--sm" @click="exportJson(tpl.current.id+'.template', tpl.current)"><svg class="icon"><use href="#i-download"/></svg>导出</button>
+                <button class="btn btn--default btn--sm" @click="toggleTplStatus">{{ tpl.current.status==='ENABLED' ? '停用' : '启用' }}</button>
+                <button class="btn btn--text danger btn--sm" @click="delTemplate">删除</button>
+                <button class="btn btn--primary btn--sm" @click="saveTpl">保存</button>
+              </div>
+            </div>
+            <div class="panel__body" style="padding-top:0">
+              <div class="tabs" style="margin:16px 0 12px">
+                <div class="tab" :class="{active:tpl.tab==='tf'}" @click="tpl.tab='tf'">字段定义（JSON 编辑）</div>
+                <div class="tab" :class="{active:tpl.tab==='tp'}" @click="tpl.tab='tp'">匹配预览</div>
+                <div class="tab" :class="{active:tpl.tab==='tv'}" @click="tpl.tab='tv';loadVersions()">版本历史</div>
+              </div>
+
+              <div v-show="tpl.tab==='tf'">
+                <div class="table-wrap table-wrap--solo"><table class="tbl field-tree"><thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>注释</th><th>示例</th></tr></thead><tbody>
+                  <tr v-for="f in flatFields(tpl.current.fields)" :key="f.path" :class="{'vline-warn':f.level===1}">
+                    <td :class="'indent-'+f.level">{{ f.required?'✱ ':'' }}{{ f.name }}<span class="tag tag--danger" v-if="f.enumText" style="margin-left:6px">{{ f.enumText }}</span></td>
+                    <td><span class="tag" :class="typeTag(f.type)">{{ f.type }}</span></td>
+                    <td>{{ f.required?'✱':'—' }}</td><td>{{ f.comment }}</td>
+                    <td class="mono muted">{{ f.example != null ? f.example : '—' }}</td></tr>
+                </tbody></table></div>
+                <div class="field" style="margin-top:14px"><div class="field__label">字段定义 JSON（保存时提交；不兼容变更将被 6002 拦截，可强制）</div>
+                  <textarea class="input" v-model="tpl.fieldsJson" style="min-height:220px;font-family:var(--wb-font-mono);font-size:12.5px;padding:12px;width:100%"></textarea></div>
+                <div class="field"><div class="field__label">模板名称 / 描述</div>
+                  <div class="form-grid"><input class="input" v-model="tpl.current.name"><input class="input" v-model="tpl.current.description" placeholder="描述"></div></div>
+              </div>
+
+              <div v-show="tpl.tab==='tp'">
+                <div class="grid-2" style="gap:24px;align-items:start">
+                  <div><div class="field__label" style="margin-bottom:6px">样例消息</div>
+                    <textarea class="input" v-model="tpl.matchPayload" style="min-height:200px;font-family:var(--wb-font-mono);font-size:12.5px;padding:12px;width:100%" placeholder='{"deviceId":"temp-01","temp":36.8}'></textarea>
+                    <button class="btn btn--primary btn--md" style="margin-top:10px" @click="runMatchTest">执行匹配测试</button></div>
+                  <div><div class="field__label" style="margin-bottom:12px">匹配结果</div>
+                    <template v-if="tpl.matchResult">
+                      <div class="score-row"><span>{{ tpl.matchResult.templateId || '未归类' }}</span>
+                        <span class="progress"><span :style="{width:Math.round((tpl.matchResult.score||0)*100)+'%'}"></span></span>
+                        <span class="num" style="text-align:right">{{ (tpl.matchResult.score||0).toFixed(2) }}</span></div>
+                      <div class="field__hint">类型 <b class="tag tag--success">{{ tpl.matchResult.type }}</b> · v{{ tpl.matchResult.version }}</div>
+                      <div class="detail-row" v-if="tpl.mtTyped"><span class="label">typedJson</span><span class="value mono" style="word-break:break-all">{{ tpl.mtTyped }}</span></div>
+                      <div class="detail-row" v-if="tpl.mtUnknown"><span class="label">unknownFields</span><span class="value mono">{{ tpl.mtUnknown.join(', ') }}</span></div>
+                      <div class="detail-row" v-for="(v,i) in (tpl.mtViolations||[])" :key="i"><span class="label">违规</span><span class="value" style="color:var(--wb-color-danger)">{{ v }}</span></div>
+                    </template>
+                    <div class="empty" v-else><svg class="icon"><use href="#i-wand"/></svg>尚无结果</div>
+                  </div>
+                </div>
+              </div>
+
+              <div v-show="tpl.tab==='tv'">
+                <div class="table-wrap table-wrap--solo"><table class="tbl"><thead><tr><th>版本</th><th>状态</th><th>来源</th><th>更新时间</th></tr></thead><tbody>
+                  <tr v-for="v in tpl.versions" :key="v.version"><td class="num">v{{ v.version }}</td><td><span class="tag tag--info">{{ v.status }}</span></td><td>{{ v.source }}</td><td class="muted">{{ fmt(v.updatedAt) }}</td></tr>
+                </tbody></table></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel" style="margin:0"><div class="empty"><svg class="icon"><use href="#i-file-text"/></svg>选择左侧模板查看详情</div></div>
+        </div>
+      </section>
+
+      <!-- ============ 收发调试台 ============ -->
+      <section class="view active" v-show="route==='messaging'">
+        <div class="toolbar" style="border-radius:var(--wb-radius-md);margin-bottom:16px">
+          <span class="muted" style="font-size:13px">Server</span>
+          <select class="select" v-model="ms.serverId" @change="onMsServer"><option v-for="s in servers" :value="s.id">{{ s.name }}</option></select>
+          <span class="muted" style="font-size:13px">Topic 过滤</span><input class="input" style="width:200px" placeholder="如 device/# 或留空全部" v-model="ms.filter">
+          <button class="btn btn--default btn--sm" @click="wsSubscribe"><svg class="icon"><use href="#i-radio"/></svg>订阅调试流</button>
+          <button class="btn btn--text btn--sm" @click="wsUnsubscribe">取消</button>
+          <span class="spacer"></span>
+          <span class="tag" :class="ws.open?'tag--success':'tag--danger'"><span class="dot" :class="ws.open?'dot--pulse':'dot--down'"></span>{{ ws.open ? 'WS 已连接' : 'WS 未连接' }}</span>
+        </div>
+        <div class="split">
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-send"/></svg>发布</span>
+              <div class="seg"><button :class="{on:ms.mode==='form'}" @click="ms.mode='form'">模板表单</button><button :class="{on:ms.mode==='json'}" @click="ms.mode='json'">JSON 源码</button></div></div>
+            <div class="panel__body">
+              <div class="field"><div class="field__label"><span class="req">*</span> Topic</div><input class="input mono" v-model="ms.pubTopic" placeholder="device/temp-01/event"></div>
+              <div class="field"><div class="field__label">模板（预校验 + x-template 显式声明）</div>
+                <select class="select" style="width:100%" v-model="ms.templateId" @change="buildForm"><option value="">（不绑定）</option>
+                  <option v-for="t in templates.filter(x=>x.status==='ENABLED')" :value="t.id">{{ t.name }} v{{ t.version }}</option></select></div>
+
+              <template v-if="ms.mode==='form' && ms.formFields.length">
+                <div class="field" v-for="f in ms.formFields" :key="f.name">
+                  <div class="field__label"><span class="req" v-if="f.required">*</span> {{ f.name }} <span class="muted" v-if="f.comment">· {{ f.comment }}</span></div>
+                  <select class="select" style="width:100%" v-if="f.enumValues && f.enumValues.length" v-model="ms.form[f.name]"><option v-for="e in f.enumValues" :value="e">{{ e }}</option></select>
+                  <textarea class="input" v-else-if="f.type==='object'||f.type==='array'" v-model="ms.form[f.name]" style="min-height:70px;font-family:var(--wb-font-mono);padding:10px;width:100%"></textarea>
+                  <input class="input" v-else :type="f.type==='number'||f.type==='integer'?'number':'text'" v-model="ms.form[f.name]" :placeholder="String(f.example!=null?f.example:f.name)">
+                </div>
+              </template>
+              <div class="field" v-if="ms.mode==='json'"><div class="field__label">Payload JSON</div>
+                <textarea class="input" v-model="ms.rawJson" style="min-height:160px;font-family:var(--wb-font-mono);font-size:12.5px;padding:12px;width:100%"></textarea></div>
+
+              <div class="grid-2" style="gap:12px">
+                <div class="field" style="margin:0" v-if="isMqtt(ms.serverId)"><div class="field__label">QoS</div>
+                  <div class="seg"><button v-for="q in [0,1,2]" :key="q" :class="{on:ms.qos===q}" @click="ms.qos=q">{{ q }}</button></div></div>
+                <div class="field" style="margin:0" v-if="isMqtt(ms.serverId)"><div class="field__label">retain</div><label class="check"><input type="checkbox" v-model="ms.retain"> 保留消息</label></div>
+                <div class="field" style="margin:0" v-if="isKafka(ms.serverId)"><div class="field__label">分区键 key</div><input class="input" v-model="ms.key" placeholder="可选"></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:16px">
+                <button class="btn btn--primary btn--md" @click="doPublish"><svg class="icon"><use href="#i-send"/></svg>发送</button>
+                <button class="btn btn--default btn--md" @click="validateOnly">校验</button></div>
+            </div>
+          </div>
+        </div>
+
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-inbox"/></svg>实时流（{{ feed.length }}）</span>
+              <div style="display:flex;gap:8px"><button class="btn btn--default btn--sm" @click="ms.paused=!ms.paused"><svg class="icon"><use :href="ms.paused?'#i-play':'#i-pause'"/></svg>{{ ms.paused?'继续':'暂停' }}</button><button class="btn btn--text btn--sm" @click="feed=[]"><svg class="icon"><use href="#i-refresh"/></svg>清空</button></div></div>
+            <div class="feed">
+              <div class="feed-item" :class="{open:f.open}" v-for="(f,i) in feed" :key="i" @click="f.open=!f.open">
+                <div class="feed-item__top">
+                  <span class="tag" :class="feedTag(f).cls" v-html="feedTag(f).label"></span>
+                  <span class="feed-item__topic">{{ f.topic }}</span>
+                  <span class="num muted" style="font-size:11px" v-if="f.templateId">{{ f.templateId }}@{{ f.templateVersion }}</span>
+                  <span class="muted" style="font-size:11px" v-if="f.matchType==='NONE'">score {{ (f.matchScore||0).toFixed(2) }} &lt; 0.8</span>
+                  <span class="feed-item__ts">{{ fmt(f.receiveTs) }}</span></div>
+                <div class="feed-item__body"><div class="json">{{ f.payloadJson || ('parseError: '+f.parseError) }}</div></div>
+              </div>
+              <div class="empty" v-if="!feed.length"><svg class="icon"><use href="#i-radio"/></svg>等待消息…先「订阅调试流」，Broker 侧可用 <code>x-template</code> 头或正式订阅触发</div>
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:16px"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-mail"/></svg>正式订阅</span>
+          <button class="btn btn--primary btn--sm" @click="openSub(null)"><svg class="icon"><use href="#i-plus"/></svg>新建订阅</button></div>
+          <div class="table-wrap" style="border:none;border-radius:0"><table class="tbl"><thead><tr><th>ID</th><th>Topic</th><th>Group/QoS</th><th>模板</th><th>DLQ</th><th>状态</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="sb in subs" :key="sb.id">
+              <td class="mono">{{ sb.id }}</td><td class="mono">{{ sb.topic }}</td>
+              <td>{{ sb.group || ('qos '+sb.qos) }}</td>
+              <td><span class="muted" v-if="sb.autoMatch">自动匹配</span><span class="mono" v-else>{{ (sb.templateIds||[]).join(',') }}</span></td>
+              <td>{{ sb.dlqEnabled?'开':'关' }}</td>
+              <td><span class="tag" :class="sb.state==='RUNNING'?'tag--success':(sb.state==='PAUSED'?'tag--warning':'tag--info')">{{ sb.state }}</span></td>
+              <td class="col-actions">
+                <button class="btn btn--text" v-if="sb.state!=='RUNNING'" @click="subOp(sb,'start')">启动</button>
+                <button class="btn btn--text" v-if="sb.state==='RUNNING'" @click="subOp(sb,'pause')">暂停</button>
+                <button class="btn btn--text" v-if="sb.state==='PAUSED'" @click="subOp(sb,'resume')">恢复</button>
+                <button class="btn btn--text" v-if="sb.state!=='STOPPED'" @click="subOp(sb,'stop')">停止</button>
+                <button class="btn btn--text" @click="openSub(sb)">编辑</button>
+                <button class="btn btn--text danger" @click="delSub(sb)">删除</button></td></tr>
+            <tr v-if="!subs.length"><td colspan="7" class="muted">暂无订阅</td></tr>
+          </tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ============ 死信 DLQ ============ -->
+      <section class="view active" v-show="route==='dlq'">
+        <div class="banner banner--info" v-if="!dlq.queryable"><svg class="icon"><use href="#i-db"/></svg>当前为 <b>{{ ov.storeMode }}</b> 模式：仅支持尾部扫描与重放，条件分页查询不可用。</div>
+        <div class="toolbar">
+          <input class="input" placeholder="Topic" style="width:180px" v-model="dlq.topic" :disabled="!dlq.queryable">
+          <select class="select" v-model="dlq.errCode" :disabled="!dlq.queryable"><option value="">全部错误码</option><option v-for="c in errCodes" :value="c">{{ c }}</option></select>
+          <input class="input" type="number" v-model.number="dlq.limit" title="尾部条数" style="width:90px">
+          <span class="spacer"></span>
+          <button class="btn btn--default btn--sm" @click="loadDlq"><svg class="icon"><use href="#i-search"/></svg>查询</button>
+          <button class="btn btn--default btn--sm" @click="exportJson('dlq', dlq.rows)"><svg class="icon"><use href="#i-download"/></svg>导出</button>
+          <button class="btn btn--primary btn--sm" :disabled="!dlqSel.length" @click="replay(dlqSel)"><svg class="icon"><use href="#i-refresh"/></svg>重放选中 {{ dlqSel.length }} 条</button>
+          <button class="btn btn--default btn--sm" :disabled="!dlqSel.length" @click="drop(dlqSel)">丢弃选中</button>
+        </div>
+        <div class="table-wrap">
+          <table class="tbl"><thead><tr><th style="width:36px"><label class="check"><input type="checkbox" :checked="dlqSel.length===dlq.rows.length&&dlq.rows.length>0" @change="toggleAllDlq"></label></th><th>时间</th><th>Topic</th><th>模板</th><th>错误</th><th>大小</th><th class="col-actions">操作</th></tr></thead><tbody>
+            <tr v-for="d in dlq.rows" :key="d.id">
+              <td><label class="check"><input type="checkbox" :value="d.id" v-model="dlqSel"></label></td>
+              <td class="num muted">{{ fmt(d.createdAt) }}</td><td class="mono">{{ d.topic }}</td>
+              <td><span class="tag" :class="d.templateId?'tag--success':'tag--info'">{{ d.templateId || '未归类' }}</span></td>
+              <td><span class="tag tag--danger">{{ d.errCode }}</span> {{ d.errMsg }}</td>
+              <td class="num">{{ d.payloadBytes }} B</td>
+              <td class="col-actions"><button class="btn btn--text" @click="jsonModal('死信 #'+d.id, tryParse(d.payloadPreview))">查看</button><button class="btn btn--text" @click="replay([d.id])">重放</button></td></tr>
+            <tr v-if="!dlq.rows.length"><td colspan="7" class="muted">无死信</td></tr>
+          </tbody></table>
+          <div class="pagination"><span>共 {{ dlq.total }} 条</span></div>
+        </div>
+      </section>
+
+      <!-- ============ 系统设置 ============ -->
+      <section class="view active" v-show="route==='settings'">
+        <div class="grid-2">
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-db"/></svg>存储与能力</span></div><div class="panel__body">
+            <div class="detail-row"><span class="label">存储模式</span><span class="value"><span class="tag tag--primary">{{ ov.storeMode }}</span></span></div>
+            <div class="detail-row"><span class="label">运行能力</span><span class="value"><span class="tag tag--info" v-for="c in (ov.runtimeCapabilities||[])" :key="c" style="margin-right:4px">{{ c }}</span></span></div>
+            <div class="detail-row"><span class="label">版本</span><span class="value mono">mqtt-mngr v{{ ov.version }}</span></div>
+            <div class="detail-row"><span class="label">WS 会话</span><span class="value num">{{ ov.wsSessions }}</span></div>
+            <div class="detail-row" style="border:none"><span class="label">指标端点</span><span class="value"><a class="mono" :href="base()+'/actuator/prometheus'" target="_blank">/actuator/prometheus</a></span></div>
+          </div></div>
+          <div class="panel" style="margin:0"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-key"/></svg>安全</span></div><div class="panel__body">
+            <div class="detail-row"><span class="label">鉴权 Token</span><span class="value"><span class="tag" :class="token?'tag--success':'tag--warning'"><span class="dot" :class="token?'dot--on':'dot--off'"></span>{{ token?'本地已配置':'未配置（后端可能未启用）' }}</span></span></div>
+            <div class="detail-row"><span class="label">Token 头</span><span class="value mono">X-Mngr-Token</span></div>
+            <div class="detail-row"><span class="label">凭据加密</span><span class="value">AES-256-GCM（API 永不回显明文）</span></div>
+            <div class="detail-row"><span class="label">全局管理面</span><span class="value">allowAdminOps = {{ ov.allowAdminOps }}（DANGER 级需回显资源名二次确认）</span></div>
+            <div class="detail-row" style="border:none"><span class="label">修改 Token</span><span class="value"><button class="btn btn--default btn--sm" @click="openToken()">配置</button></span></div>
+          </div></div>
+        </div>
+        <div class="panel" style="margin-top:16px"><div class="panel__head"><span class="panel__title"><svg class="icon"><use href="#i-activity"/></svg>审计日志</span>
+          <button class="btn btn--default btn--sm" @click="loadAudit"><svg class="icon"><use href="#i-refresh"/></svg>刷新</button></div>
+          <div class="banner banner--warn" style="margin:0 18px" v-if="!auditQueryAble"><svg class="icon"><use href="#i-warn"/></svg>当前存储模式下审计不可查询（8001 降级）。</div>
+          <div class="table-wrap" style="border:none;border-radius:0" v-else><table class="tbl"><thead><tr><th>时间</th><th>操作者</th><th>动作</th><th>对象</th><th>ID</th><th class="col-actions"></th></tr></thead><tbody>
+            <tr v-for="a in auditRows" :key="a.id"><td class="num muted">{{ fmt(a.createdAt) }}</td><td>{{ a.actor }}</td><td><span class="tag tag--primary">{{ a.action }}</span></td><td>{{ a.objType }}</td><td class="mono">{{ a.objId }}</td>
+              <td class="col-actions"><button class="btn btn--text" @click="jsonModal('审计 '+a.id, {before:tryParse(a.beforeJson),after:tryParse(a.afterJson)})">diff</button></td></tr>
+          </tbody></table></div>
+          <div class="pagination"><span>共 {{ auditTotal }} 条</span><div class="pagination__pages">
+            <button class="page-btn" @click="auditPage>0 && (auditPage--, loadAudit())">‹</button>
+            <button class="page-btn active">{{ auditPage+1 }}</button>
+            <button class="page-btn" @click="auditPage++, loadAudit()">›</button></div></div>
+        </div>
+      </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 通用表单模态 -->
+  <div class="modal-overlay" :class="{open:!!fm.kind}"><div class="modal" :class="{'modal--wide':fm.kind==='server'||fm.kind==='topic'||fm.kind==='sub'||fm.kind==='infer'}" role="dialog">
+    <div class="modal__head"><span>{{ fm.title }}</span></div>
+    <div class="modal__body" style="max-height:70vh;overflow:auto">
+
+      <template v-if="fm.kind==='server'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> 名称</div><input class="input" v-model="fm.f.name"></div>
+          <div class="field"><div class="field__label"><span class="req">*</span> 协议</div>
+            <select class="select" style="width:100%" v-model="fm.f.protocol" :disabled="!!fm.f.id"><option value="KAFKA">Kafka</option><option value="MQTT">MQTT 5.0/3.1.1</option></select></div>
+          <div class="field"><div class="field__label">{{ fm.f.protocol==='KAFKA'?'bootstrapServers':'serverUrls' }}</div>
+            <input class="input mono" v-model="fm.f.addr" :placeholder="fm.f.protocol==='KAFKA'?'host1:9092,host2:9092':'tcp://host:1883'"></div>
+          <div class="field"><div class="field__label">clientId</div><input class="input mono" v-model="fm.f.clientId"></div>
+          <div class="field"><div class="field__label">连接模式</div><select class="select" style="width:100%" v-model="fm.f.connMode"><option>LAZY</option><option>EAGER</option><option>MANUAL</option></select></div>
+          <div class="field"><div class="field__label">启用</div><label class="check"><input type="checkbox" v-model="fm.f.enabled"> 启用</label></div>
+          <div class="field"><div class="field__label">用户名（凭据）</div><input class="input" v-model="fm.f.username"></div>
+          <div class="field"><div class="field__label">密码（凭据，不回显）</div><input class="input" type="password" v-model="fm.f.password" :placeholder="fm.f.hasCred?'留空则保留原凭据':''"></div>
+          <div class="field" v-if="fm.f.protocol==='MQTT'"><div class="field__label">MQTT 版本</div><select class="select" style="width:100%" v-model="fm.f.mqttVersion"><option value="5">5.0</option><option value="3">3.1.1</option></select></div>
+          <div class="field" v-if="fm.f.protocol==='MQTT'"><div class="field__label">EMQX Dashboard baseUrl</div><input class="input mono" v-model="fm.f.baseUrl" placeholder="http://host:18083/api/v5"></div>
+          <div class="field" v-if="fm.f.protocol==='MQTT'"><div class="field__label">mgmtApiKey（EMQX API Key，可选）</div><input class="input" v-model="fm.f.mgmtApiKey"></div>
+          <div class="field" v-if="fm.f.protocol==='MQTT'"><div class="field__label">mgmtSecret（EMQX API Secret，可选）</div><input class="input" type="password" v-model="fm.f.mgmtSecret" :placeholder="fm.f.hasCred?'留空则保留原凭据':''"></div>
+          <div class="field field--full"><div class="field__label">高级 conn 参数（JSON，覆盖合并）</div>
+            <textarea class="input" v-model="fm.f.connJson" style="min-height:70px;font-family:var(--wb-font-mono);padding:10px;width:100%" placeholder='{"keepAlive":30,"tls":false}'></textarea></div>
+          <div class="field field--full"><div class="field__label">管理面门控 allowAdminOps（覆盖全局）</div>
+            <select class="select" style="width:100%" v-model="fm.f.adminOps"><option value="">继承全局</option><option value="true">开</option><option value="false">关</option></select></div>
+        </div>
+        <div class="field__hint">凭据以 AES-256-GCM 加密存储，保存后 API 仅返回键名。</div>
+      </template>
+
+      <template v-if="fm.kind==='topic'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> Topic 名 / 模式</div><input class="input mono" v-model="fm.f.namePattern" placeholder="device/+/event"></div>
+          <div class="field"><div class="field__label">方向</div><select class="select" style="width:100%" v-model="fm.f.direction"><option value="BOTH">双向</option><option value="PUB">发布</option><option value="SUB">订阅</option></select></div>
+          <div class="field"><div class="field__label">格式</div><input class="input" v-model="fm.f.format"></div>
+          <div class="field" v-if="isMqtt(fm.f.serverId)"><div class="field__label">QoS</div><select class="select" style="width:100%" v-model="fm.f.qos"><option :value="null">默认</option><option :value="0">0</option><option :value="1">1</option><option :value="2">2</option></select></div>
+          <div class="field" v-if="isKafka(fm.f.serverId)"><div class="field__label">分区键策略</div><select class="select" style="width:100%" v-model="fm.f.keyStrategy"><option value="">默认</option><option value="round-robin">round-robin</option><option value="key-hash">key-hash</option></select></div>
+          <div class="field"><div class="field__label">默认模板</div><select class="select" style="width:100%" v-model="fm.f.templateId"><option value="">（不绑定）</option><option v-for="t in templates" :value="t.id">{{ t.name }}（{{ t.id }}）</option></select></div>
+          <div class="field"><div class="field__label">自动匹配</div><label class="check"><input type="checkbox" v-model="fm.f.autoMatch"> 开启</label></div>
+          <div class="field"><div class="field__label">负责人</div><input class="input" v-model="fm.f.owner"></div>
+          <div class="field field--full"><div class="field__label">备注</div><input class="input" v-model="fm.f.remark"></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='sub'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> Topic</div><input class="input mono" v-model="fm.f.topic"></div>
+          <div class="field"><div class="field__label">Group（Kafka）</div><input class="input mono" v-model="fm.f.group" placeholder="mngr-group"></div>
+          <div class="field" v-if="isMqtt(fm.f.serverId)"><div class="field__label">QoS</div><select class="select" style="width:100%" v-model="fm.f.qos"><option :value="0">0</option><option :value="1">1</option><option :value="2">2</option></select></div>
+          <div class="field" v-if="isKafka(fm.f.serverId)"><div class="field__label">Offset 策略</div><select class="select" style="width:100%" v-model="fm.f.offsetStrategy"><option value="latest">latest</option><option value="earliest">earliest</option></select></div>
+          <div class="field field--full"><div class="field__label">绑定模板 ID（逗号分隔，留空=自动匹配全部）</div><input class="input mono" v-model="fm.f.templateIdsText"></div>
+          <div class="field"><div class="field__label">自动匹配归类</div><label class="check"><input type="checkbox" v-model="fm.f.autoMatch"></label></div>
+          <div class="field"><div class="field__label">失败进 DLQ</div><label class="check"><input type="checkbox" v-model="fm.f.dlqEnabled"></label></div>
+          <div class="field"><div class="field__label">MQTT 会话持久</div><label class="check"><input type="checkbox" v-model="fm.f.persistent"></label></div>
+          <div class="field"><div class="field__label">保存后立即启动</div><label class="check"><input type="checkbox" v-model="fm.f.start"></label></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='createTopic'">
+        <div class="form-grid">
+          <div class="field field--full"><div class="field__label"><span class="req">*</span> Topic 名</div><input class="input mono" v-model="fm.f.name"></div>
+          <div class="field"><div class="field__label">分区数</div><input class="input" type="number" v-model.number="fm.f.partitions"></div>
+          <div class="field"><div class="field__label">副本数</div><input class="input" type="number" v-model.number="fm.f.replicationFactor"></div>
+          <div class="field field--full"><div class="field__label">配置（JSON，如 retention.ms）</div><input class="input mono" v-model="fm.f.configJson" placeholder='{"retention.ms":"604800000"}'></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='addPartitions'">
+        <div class="field"><div class="field__label">Topic <span class="mono">{{ fm.f.topic }}</span> 当前 {{ fm.f.current }} 分区 → 总数</div>
+          <input class="input" type="number" v-model.number="fm.f.total"></div>
+      </template>
+
+      <template v-if="fm.kind==='resetOffsets'">
+        <div class="banner banner--warn" style="margin-bottom:12px"><svg class="icon"><use href="#i-warn"/></svg>重置消费组 <b class="mono">{{ fm.f.gid }}</b> 的 offset 不可逆，消费者将按新位点重新消费。</div>
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> Topic</div><input class="input mono" v-model="fm.f.topic"></div>
+          <div class="field"><div class="field__label"><span class="req">*</span> 策略</div><select class="select" style="width:100%" v-model="fm.f.strategy"><option value="to-earliest">to-earliest</option><option value="to-latest">to-latest</option><option value="to-timestamp">to-timestamp</option></select></div>
+          <div class="field" v-if="fm.f.strategy==='to-timestamp'"><div class="field__label">时间戳（epoch 毫秒）</div><input class="input" type="number" v-model.number="fm.f.timestamp"></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='infer'">
+        <div class="field"><div class="field__label">样例 JSON（可多条，空行分隔）</div>
+          <textarea class="input" v-model="fm.f.samples" style="min-height:140px;font-family:var(--wb-font-mono);font-size:12.5px;padding:12px;width:100%"></textarea></div>
+        <div class="field"><div class="field__label">保存为草稿的名称（留空只反推不保存）</div><input class="input" v-model="fm.f.name"></div>
+      </template>
+
+      <template v-if="fm.kind==='newTpl'">
+        <div class="form-grid">
+          <div class="field"><div class="field__label"><span class="req">*</span> 模板 ID（小写字母数字-_）</div><input class="input mono" v-model="fm.f.id" placeholder="tpl-example"></div>
+          <div class="field"><div class="field__label"><span class="req">*</span> 名称</div><input class="input" v-model="fm.f.name"></div>
+          <div class="field field--full"><div class="field__label">描述</div><input class="input" v-model="fm.f.description"></div>
+          <div class="field field--full"><div class="field__label">字段 JSON</div>
+            <textarea class="input" v-model="fm.f.fieldsJson" style="min-height:120px;font-family:var(--wb-font-mono);padding:10px;width:100%"></textarea></div>
+        </div>
+      </template>
+
+      <template v-if="fm.kind==='browse'">
+        <div class="banner banner--info" v-if="fm.data.brokerNote"><svg class="icon"><use href="#i-help"/></svg>{{ fm.data.brokerNote }}</div>
+        <div class="banner banner--warn" v-else-if="!fm.data.brokerLive"><svg class="icon"><use href="#i-warn"/></svg>Broker 实时不可达：{{ fm.data.brokerError }}</div>
+        <div class="field"><div class="field__label">Broker Topic（{{ (fm.data.brokerTopics||[]).length }}）</div>
+          <div class="json" style="max-height:200px">{{ (fm.data.brokerTopics||[]).join('\n') || '—' }}</div></div>
+      </template>
+
+      <template v-if="fm.kind==='token'">
+        <div class="field"><div class="field__label">X-Mngr-Token（仅存浏览器 localStorage）</div><input class="input mono" v-model="fm.f.token" type="password"></div>
+        <div class="field__hint">后端 mngr.auth.token 为空时可不填。</div>
+      </template>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--default btn--md" @click="fm.kind=''">取消</button>
+      <button class="btn btn--primary btn--md" @click="fmSubmit">{{ fm.okLabel || '保存' }}</button>
+    </div>
+  </div></div>
+
+  <!-- 危险操作确认 -->
+  <div class="modal-overlay" :class="{open:danger.open}"><div class="modal" role="dialog" aria-modal="true">
+    <div class="modal__head"><span class="warn-ico"><svg class="icon icon--20"><use href="#i-warn"/></svg></span><span>{{ danger.title }}</span></div>
+    <div class="modal__body">{{ danger.desc }}
+      <div class="box field"><div class="field__label">请输入资源名 <span class="mono">{{ danger.resource }}</span> 以确认</div>
+        <input class="input" v-model="danger.input" :placeholder="danger.resource" @keyup.enter="danger.input===danger.resource && dangerConfirm()"></div>
+    </div>
+    <div class="modal__foot"><button class="btn btn--default btn--md" @click="danger.open=false">取消</button>
+      <button class="btn btn--danger btn--md" :disabled="danger.input!==danger.resource" @click="dangerConfirm()">{{ danger.action }}</button></div>
+  </div></div>
+
+  <!-- JSON 查看 -->
+  <div class="modal-overlay" :class="{open:jm.open}"><div class="modal modal--wide" role="dialog">
+    <div class="modal__head"><span>{{ jm.title }}</span></div>
+    <div class="modal__body"><div class="json" style="max-height:60vh">{{ jm.text }}</div></div>
+    <div class="modal__foot"><button class="btn btn--default btn--md" @click="jm.open=false">关闭</button></div>
+  </div></div>
+
+  <div class="toast-stack">
+    <div class="toast" :class="'toast--'+t.type" v-for="t in toasts" :key="t.id">
+      <span class="toast__icon"><svg class="icon icon--14"><use :href="'#i-'+(t.type==='success'?'check':t.type==='error'?'x':'help')"/></svg></span><span>{{ t.msg }}</span></div>
+  </div>
+</div>
+
+<script src="vendor/vue.global.prod.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

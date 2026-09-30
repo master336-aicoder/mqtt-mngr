@@ -1,0 +1,20 @@
+id: t1
+version: 1
+name: T1
+description: null
+status: ENABLED
+fields:
+- name: x
+  type: integer
+  required: false
+  comment: null
+  example: null
+  defaultValue: null
+  enumValues: null
+  children: null
+  container: false
+source: MANUAL
+owner: null
+tags: null
+createdAt: 1790738241
+updatedAt: 1790738241

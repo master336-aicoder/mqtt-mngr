@@ -1,0 +1,51 @@
+server:
+  port: 8090
+  shutdown: graceful
+
+spring:
+  application:
+    name: mqtt-mngr
+  lifecycle:
+    timeout-per-shutdown-phase: 15s
+  datasource:
+    url: jdbc:h2:file:${mngr.data-dir}/db/mngr;MODE=MySQL;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+  jackson:
+    default-property-inclusion: non_null
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    tags:
+      app: mqtt-mngr
+
+mngr:
+  store:
+    mode: h2            # h2 | file
+  data-dir: ./data
+  auth:
+    token: ""           # 非空则启用 X-Mngr-Token 鉴权
+  master-key: ${MNGR_MASTER_KEY:dev-master-key-change-me}
+  allow-admin-ops: false
+  dispatch:
+    queue-capacity: 8192
+    worker-per-sub: 1
+  publish:
+    buffer-capacity: 10000
+    overflow: DROP_OLDEST   # DROP_OLDEST | DROP_NEWEST | BLOCK
+    max-retries: 3
+  ws:
+    send-queue-limit: 2000

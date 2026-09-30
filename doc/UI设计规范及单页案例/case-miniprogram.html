@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>UI 规范案例 · 小程序服务预约（v1.3）</title>
+<style>
+/* ============================================================
+ * 令牌层 v1.3 · 强化玻璃拟态
+ * 主色通过令牌集中替换为品牌绿（演示规范第 7 章换肤能力）
+ * ============================================================ */
+:root,[data-theme="light"]{
+  --wb-color-primary:#07C160;--wb-color-primary-hover:#06AD56;--wb-color-primary-active:#059348;--wb-color-primary-bg:#E7F8EE;
+  --wb-color-accent:#34D399;
+  --wb-color-success:#10B981;--wb-color-warning:#F59E0B;--wb-color-danger:#EF4444;--wb-color-info:#64748B;
+  --wb-color-bg:#F2F4F7;--wb-color-surface:#FFFFFF;
+  --wb-glass-bg:rgba(255,255,255,.52);--wb-glass-border:rgba(255,255,255,.78);--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.45);
+  --wb-color-border:rgba(15,23,42,.07);--wb-color-border-hover:rgba(15,23,42,.14);
+  --wb-color-text:#0F172A;--wb-color-text-2:#475569;--wb-color-text-3:#94A3B8;--wb-color-text-disabled:#CBD5E1;--wb-color-striping:rgba(15,23,42,.03);
+  --wb-font-family:system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+  --wb-radius-sm:8px;--wb-radius-md:12px;--wb-radius-lg:16px;--wb-radius-xl:24px;--wb-radius-full:999px;
+  --wb-shadow-sm:0 1px 2px rgba(15,23,42,.04),0 1px 3px rgba(15,23,42,.06);
+  --wb-shadow-md:0 4px 16px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.04);
+  --wb-shadow-lg:0 16px 48px rgba(15,23,42,.14),0 4px 16px rgba(15,23,42,.06);
+  --wb-shadow-glow:0 8px 28px rgba(7,193,96,.35);
+  --wb-z-sticky:1100;--wb-z-message:1400;
+  --wb-motion-fast:120ms;--wb-motion-base:200ms;--wb-motion-slow:320ms;
+  --wb-motion-ease:cubic-bezier(.32,.72,0,1);--wb-motion-spring:cubic-bezier(.34,1.56,.64,1);
+  --wb-gradient:linear-gradient(135deg,#07C160 0%,#34D399 100%);
+}
+[data-theme="dark"]{
+  --wb-color-primary:#10D66B;--wb-color-primary-hover:#34D399;--wb-color-primary-active:#07C160;--wb-color-primary-bg:rgba(7,193,96,.16);
+  --wb-color-accent:#34D399;
+  --wb-color-success:#34D399;--wb-color-warning:#FBBF24;--wb-color-danger:#F87171;--wb-color-info:#94A3B8;
+  --wb-color-bg:#0B0F0D;--wb-color-surface:#161A18;
+  --wb-glass-bg:rgba(30,38,34,.42);--wb-glass-border:rgba(255,255,255,.15);--wb-glass-blur-strong:32px;--wb-glass-saturate:200%;--wb-glass-highlight:rgba(255,255,255,.10);
+  --wb-color-border:rgba(255,255,255,.09);--wb-color-border-hover:rgba(255,255,255,.18);
+  --wb-color-text:#F1F5F3;--wb-color-text-2:#C3CEC8;--wb-color-text-3:#8A968F;--wb-color-text-disabled:#565F5A;--wb-color-striping:rgba(255,255,255,.04);
+  --wb-shadow-sm:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.4);
+  --wb-shadow-md:0 4px 16px rgba(0,0,0,.4),0 2px 6px rgba(0,0,0,.3);
+  --wb-shadow-lg:0 16px 48px rgba(0,0,0,.55),0 4px 16px rgba(0,0,0,.4);
+  --wb-shadow-glow:0 8px 28px rgba(16,214,107,.35);
+  --wb-gradient:linear-gradient(135deg,#10D66B 0%,#34D399 100%);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:var(--wb-font-family);font-size:14px;line-height:1.6;background:#c9cdd4;color:var(--wb-color-text);-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--wb-color-primary);outline-offset:2px}
+.icon{width:16px;height:16px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block}
+.icon--20{width:20px;height:20px}
+.icon--24{width:24px;height:24px}
+.icon--28{width:28px;height:28px}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* 小程序外壳 */
+.wx-frame{position:relative;width:375px;height:772px;margin:24px auto;border-radius:38px;overflow:hidden;display:flex;flex-direction:column;
+  box-shadow:0 0 0 9px #14171a,0 0 0 10px #333,0 26px 64px rgba(15,23,42,.35);
+  background:
+    radial-gradient(circle at 0% 0%,rgba(7,193,96,.16),transparent 40%),
+    radial-gradient(circle at 100% 6%,rgba(52,211,153,.18),transparent 42%),
+    var(--wb-color-bg)}
+[data-theme="dark"] .wx-frame{background:
+    radial-gradient(circle at 0% 0%,rgba(7,193,96,.26),transparent 45%),
+    radial-gradient(circle at 100% 6%,rgba(52,211,153,.24),transparent 45%),
+    var(--wb-color-bg)}
+
+/* 小程序导航栏（玻璃） */
+.wx-statusbar{height:42px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 4px;font-size:13px;font-weight:600;flex-shrink:0;position:relative;z-index:2}
+.wx-navbar{height:44px;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;z-index:var(--wb-z-sticky);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur-strong)) saturate(var(--wb-glass-saturate));
+  border-bottom:1px solid var(--wb-color-border)}
+.wx-navbar__title{font-size:16px;font-weight:600;letter-spacing:-.01em}
+.wx-navbar__capsule{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:86px;height:30px;border-radius:var(--wb-radius-full);
+  border:1px solid var(--wb-color-border);display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.5)}
+[data-theme="dark"] .wx-navbar__capsule{background:rgba(255,255,255,.06)}
+.wx-navbar__capsule .line{width:1px;height:14px;background:var(--wb-color-border)}
+.wx-navbar__capsule .dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--wb-color-text-3)}
+.wx-navbar__home{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--wb-color-text-2)}
+
+.theme-fab{position:absolute;top:92px;right:12px;width:32px;height:32px;border-radius:50%;cursor:pointer;z-index:9999;display:flex;align-items:center;justify-content:center;color:var(--wb-color-text-2);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md)}
+
+.wx-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.wx-scroll::-webkit-scrollbar{display:none}
+
+/* Banner（品牌渐变 + 玻璃装饰） */
+.banner{margin:12px;padding:22px;border-radius:var(--wb-radius-xl);color:#fff;position:relative;overflow:hidden;background:var(--wb-gradient);box-shadow:var(--wb-shadow-glow)}
+.banner::before{content:"";position:absolute;top:-50px;right:-30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.14)}
+.banner::after{content:"";position:absolute;bottom:-60px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08)}
+.banner__tag{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:var(--wb-radius-full);font-size:10px;margin-bottom:10px;
+  background:rgba(255,255,255,.22);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.3)}
+.banner__title{font-size:19px;font-weight:600;letter-spacing:-.01em;margin-bottom:4px;position:relative;z-index:1}
+.banner__sub{font-size:12px;opacity:.92;position:relative;z-index:1}
+.banner__spin{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.32)}
+
+/* 宫格导航（玻璃卡） */
+.grid-nav{display:grid;grid-template-columns:repeat(4,1fr);margin:0 12px;border-radius:var(--wb-radius-lg);overflow:hidden;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md)}
+.grid-nav__item{display:flex;flex-direction:column;align-items:center;gap:6px;padding:15px 4px;cursor:pointer;position:relative;transition:background var(--wb-motion-fast)}
+.grid-nav__item:active{background:var(--wb-color-striping)}
+.grid-nav__icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+.grid-nav__label{font-size:11px;color:var(--wb-color-text-2)}
+
+/* 区块 */
+.block-head{display:flex;align-items:center;justify-content:space-between;padding:20px 16px 10px}
+.block-head__title{font-size:15px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:6px}
+.block-head__more{font-size:12px;color:var(--wb-color-text-3);display:flex;align-items:center;gap:2px}
+
+/* 服务卡片（玻璃） */
+.service-card{margin:0 12px 10px;padding:14px;border-radius:var(--wb-radius-md);display:flex;gap:12px;cursor:pointer;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md);
+  transition:transform var(--wb-motion-base) var(--wb-motion-ease)}
+.service-card:active{transform:scale(.975)}
+.service-card__thumb{width:62px;height:62px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.service-card__body{flex:1;min-width:0}
+.service-card__title{font-size:15px;font-weight:600;margin-bottom:5px}
+.service-card__tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.service-card__meta{display:flex;align-items:center;justify-content:space-between}
+.service-card__rating{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--wb-color-text-3)}
+.service-card__price{color:var(--wb-color-danger);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.service-card__price small{font-size:11px;font-weight:400;color:var(--wb-color-text-3)}
+
+.tag{display:inline-flex;align-items:center;padding:1px 7px;font-size:10px;border-radius:6px;line-height:16px;white-space:nowrap;font-weight:500}
+.tag--primary{color:var(--wb-color-primary);background:var(--wb-color-primary-bg)}
+.tag--success{color:var(--wb-color-success);background:rgba(16,185,129,.14)}
+.tag--warning{color:var(--wb-color-warning);background:rgba(245,158,11,.14)}
+.tag--info{color:var(--wb-color-info);background:rgba(100,116,139,.14)}
+
+/* Cell 列表（小程序典型） */
+.cell-group{margin:0 12px;border-radius:var(--wb-radius-md);overflow:hidden;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border:1px solid var(--wb-glass-border);box-shadow:inset 0 1px 0 var(--wb-glass-highlight),var(--wb-shadow-md)}
+.cell{display:flex;align-items:center;padding:15px 16px;min-height:54px;cursor:pointer;border-bottom:1px solid var(--wb-color-border);transition:background var(--wb-motion-fast)}
+.cell:last-child{border-bottom:none}
+.cell:active{background:var(--wb-color-striping)}
+.cell__icon{width:24px;height:24px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-right:12px;flex-shrink:0}
+.cell__body{flex:1;min-width:0}
+.cell__title{font-size:15px;line-height:1.4}
+.cell__desc{font-size:12px;color:var(--wb-color-text-3);margin-top:2px}
+.cell__value{font-size:13px;color:var(--wb-color-text-3);margin-right:6px}
+.cell__arrow{color:var(--wb-color-text-disabled);flex-shrink:0}
+
+/* 时间段选择 */
+.time-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px 16px}
+.time-slot{padding:9px;text-align:center;font-size:13px;cursor:pointer;border-radius:var(--wb-radius-sm);border:1px solid var(--wb-color-border);background:var(--wb-color-surface);
+  transition:all var(--wb-motion-base) var(--wb-motion-ease);font-variant-numeric:tabular-nums}
+.time-slot:active{transform:scale(.95)}
+.time-slot.active{background:var(--wb-gradient);color:#fff;border-color:transparent;box-shadow:var(--wb-shadow-glow);font-weight:600}
+.time-slot.disabled{color:var(--wb-color-text-disabled);background:var(--wb-color-striping);border-color:transparent;cursor:not-allowed}
+
+/* 吸底操作栏（玻璃） */
+.wx-actionbar{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));flex-shrink:0;
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border-top:1px solid var(--wb-color-border)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;font:inherit;font-weight:500;border-radius:var(--wb-radius-sm);border:1px solid transparent;cursor:pointer;white-space:nowrap;
+  transition:all var(--wb-motion-base) var(--wb-motion-ease)}
+.btn--lg{height:46px;flex:1;font-size:16px}
+.btn--primary{background:var(--wb-gradient);color:#fff;box-shadow:0 4px 14px rgba(7,193,96,.32)}
+.btn--primary:active{transform:scale(.97)}
+.btn--default{background:var(--wb-color-surface);border-color:var(--wb-color-border);color:var(--wb-color-text-2)}
+.btn--primary:disabled{opacity:.5;box-shadow:none}
+
+/* TabBar（玻璃） */
+.wx-tabbar{height:54px;display:flex;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom);
+  background:var(--wb-glass-bg);backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));-webkit-backdrop-filter:blur(var(--wb-glass-blur)) saturate(var(--wb-glass-saturate));
+  border-top:1px solid var(--wb-color-border)}
+.wx-tabbar__item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--wb-color-text-3);font-size:10px;position:relative;transition:color var(--wb-motion-fast)}
+.wx-tabbar__item.active{color:var(--wb-color-primary)}
+.wx-tabbar__item.active .icon{stroke-width:2}
+.wx-tabbar__badge{position:absolute;top:8px;right:50%;margin-right:-16px;min-width:7px;height:7px;background:var(--wb-color-danger);border-radius:50%}
+
+/* Toast */
+.wx-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.92);padding:13px 22px;border-radius:var(--wb-radius-md);font-size:14px;z-index:var(--wb-z-message);opacity:0;pointer-events:none;max-width:240px;text-align:center;display:flex;align-items:center;gap:8px;color:#fff;
+  background:rgba(15,23,42,.82);backdrop-filter:blur(12px);transition:all var(--wb-motion-base) var(--wb-motion-spring)}
+.wx-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+
+.divider{display:flex;align-items:center;gap:12px;padding:6px 16px 8px;color:var(--wb-color-text-3);font-size:12px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--wb-color-border)}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-chevright" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+  <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></symbol>
+  <symbol id="i-broom" viewBox="0 0 24 24"><path d="M19 3 12 10"/><path d="M9.5 12.5 4 18l2 2 5.5-5.5"/><path d="M13 9 15 11"/><path d="M6 15l1 1M8 13l1 1M10 11l1 1"/></symbol>
+  <symbol id="i-tool" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M14 9h4l4 4v4a1 1 0 0 1-1 1h-1"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-droplets" viewBox="0 0 24 24"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="m17 2-5 5-5-5"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/></symbol>
+  <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM12 17.5V14l-3-3 4-3 2 3h2"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7 7-7Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+</svg>
+
+<div class="wx-frame">
+  <div class="wx-statusbar"><span>9:15</span><span style="font-size:12px">5G ▮▮▮</span></div>
+
+  <div class="wx-navbar">
+    <span class="wx-navbar__home"><svg class="icon icon--20"><use href="#i-home"/></svg></span>
+    <span class="wx-navbar__title">便民预约</span>
+    <div class="wx-navbar__capsule"><span class="dot"><svg class="icon" style="width:14px;height:14px"><use href="#i-more"/></svg></span><span class="line"></span><span class="dot"><svg class="icon" style="width:14px;height:14px"><use href="#i-grid"/></svg></span></div>
+  </div>
+
+  <button class="theme-fab" id="themeToggle" aria-label="切换主题"><svg class="icon"><use href="#i-moon"/></svg></button>
+
+  <div class="wx-scroll">
+    <div class="banner">
+      <span class="banner__tag"><svg class="icon" style="width:11px;height:11px"><use href="#i-sparkle"/></svg>限时优惠</span>
+      <div class="banner__title">家庭保洁 8 折起</div>
+      <div class="banner__sub">专业团队 · 上门服务 · 不满意免费返工</div>
+      <div class="banner__spin"><svg class="icon icon--24" style="color:#fff"><use href="#i-broom"/></svg></div>
+    </div>
+
+    <div class="grid-nav">
+      <div class="grid-nav__item" onclick="showToast('保洁服务')"><div class="grid-nav__icon" style="background:rgba(7,193,96,.12);color:#07C160"><svg class="icon icon--20"><use href="#i-broom"/></svg></div><span class="grid-nav__label">保洁</span></div>
+      <div class="grid-nav__item" onclick="showToast('维修服务')"><div class="grid-nav__icon" style="background:rgba(7,193,96,.12);color:#07C160"><svg class="icon icon--20"><use href="#i-tool"/></svg></div><span class="grid-nav__label">维修</span></div>
+      <div class="grid-nav__item" onclick="showToast('搬家服务')"><div class="grid-nav__icon" style="background:rgba(245,158,11,.12);color:#F59E0B"><svg class="icon icon--20"><use href="#i-truck"/></svg></div><span class="grid-nav__label">搬家</span></div>
+      <div class="grid-nav__item" onclick="showToast('管道服务')"><div class="grid-nav__icon" style="background:rgba(52,211,153,.12);color:#34D399"><svg class="icon icon--20"><use href="#i-droplets"/></svg></div><span class="grid-nav__label">管道</span></div>
+      <div class="grid-nav__item" onclick="showToast('家电服务')"><div class="grid-nav__icon" style="background:rgba(6,182,212,.12);color:#06B6D4"><svg class="icon icon--20"><use href="#i-tv"/></svg></div><span class="grid-nav__label">家电</span></div>
+      <div class="grid-nav__item" onclick="showToast('美容服务')"><div class="grid-nav__icon" style="background:rgba(236,72,153,.12);color:#EC4899"><svg class="icon icon--20"><use href="#i-scissors"/></svg></div><span class="grid-nav__label">美容</span></div>
+      <div class="grid-nav__item" onclick="showToast('跑腿服务')"><div class="grid-nav__icon" style="background:rgba(239,68,68,.12);color:#EF4444"><svg class="icon icon--20"><use href="#i-bike"/></svg></div><span class="grid-nav__label">跑腿</span></div>
+      <div class="grid-nav__item" onclick="showToast('全部分类')"><div class="grid-nav__icon" style="background:var(--wb-color-striping);color:var(--wb-color-text-3)"><svg class="icon icon--20"><use href="#i-grid"/></svg></div><span class="grid-nav__label">全部</span></div>
+    </div>
+
+    <div class="block-head">
+      <span class="block-head__title"><svg class="icon" style="width:15px;height:15px;color:#F59E0B"><use href="#i-star"/></svg>热门服务</span>
+      <span class="block-head__more">查看全部<svg class="icon" style="width:14px;height:14px"><use href="#i-chevright"/></svg></span>
+    </div>
+
+    <div class="service-card" onclick="showToast('已选择服务')">
+      <div class="service-card__thumb" style="background:linear-gradient(135deg,rgba(7,193,96,.16),rgba(52,211,153,.10));color:#07C160"><svg class="icon icon--28"><use href="#i-broom"/></svg></div>
+      <div class="service-card__body">
+        <div class="service-card__title">深度家庭保洁</div>
+        <div class="service-card__tags"><span class="tag tag--primary">热销</span><span class="tag tag--info">2 小时</span></div>
+        <div class="service-card__meta"><span class="service-card__rating"><svg class="icon" style="width:12px;height:12px;color:#F59E0B;fill:#F59E0B"><use href="#i-star"/></svg>4.9 · 2860 单</span><span class="service-card__price">¥88<small>起</small></span></div>
+      </div>
+    </div>
+
+    <div class="service-card" onclick="showToast('已选择服务')">
+      <div class="service-card__thumb" style="background:linear-gradient(135deg,rgba(7,193,96,.16),rgba(52,211,153,.10));color:#07C160"><svg class="icon icon--28"><use href="#i-tool"/></svg></div>
+      <div class="service-card__body">
+        <div class="service-card__title">水电维修上门</div>
+        <div class="service-card__tags"><span class="tag tag--warning">急速响应</span><span class="tag tag--info">30 分钟</span></div>
+        <div class="service-card__meta"><span class="service-card__rating"><svg class="icon" style="width:12px;height:12px;color:#F59E0B;fill:#F59E0B"><use href="#i-star"/></svg>4.8 · 1520 单</span><span class="service-card__price">¥68<small>起</small></span></div>
+      </div>
+    </div>
+
+    <div class="service-card" onclick="showToast('已选择服务')">
+      <div class="service-card__thumb" style="background:linear-gradient(135deg,rgba(245,158,11,.16),rgba(251,191,36,.10));color:#F59E0B"><svg class="icon icon--28"><use href="#i-truck"/></svg></div>
+      <div class="service-card__body">
+        <div class="service-card__title">同城搬家服务</div>
+        <div class="service-card__tags"><span class="tag tag--success">免费估价</span></div>
+        <div class="service-card__meta"><span class="service-card__rating"><svg class="icon" style="width:12px;height:12px;color:#F59E0B;fill:#F59E0B"><use href="#i-star"/></svg>4.7 · 980 单</span><span class="service-card__price">¥168<small>起</small></span></div>
+      </div>
+    </div>
+
+    <div class="divider">我的服务</div>
+    <div class="cell-group">
+      <div class="cell" onclick="showToast('我的订单')">
+        <span class="cell__icon" style="background:rgba(7,193,96,.12);color:#07C160"><svg class="icon"><use href="#i-clipboard"/></svg></span>
+        <div class="cell__body"><div class="cell__title">我的订单</div></div>
+        <span class="cell__value">3 个进行中</span><span class="cell__arrow"><svg class="icon"><use href="#i-chevright"/></svg></span>
+      </div>
+      <div class="cell" onclick="showToast('优惠券')">
+        <span class="cell__icon" style="background:rgba(245,158,11,.12);color:#F59E0B"><svg class="icon"><use href="#i-gift"/></svg></span>
+        <div class="cell__body"><div class="cell__title">优惠券</div></div>
+        <span class="cell__value">5 张可用</span><span class="cell__arrow"><svg class="icon"><use href="#i-chevright"/></svg></span>
+      </div>
+      <div class="cell" onclick="showToast('地址管理')">
+        <span class="cell__icon" style="background:rgba(7,193,96,.12);color:#07C160"><svg class="icon"><use href="#i-pin"/></svg></span>
+        <div class="cell__body"><div class="cell__title">地址管理</div></div>
+        <span class="cell__arrow"><svg class="icon"><use href="#i-chevright"/></svg></span>
+      </div>
+      <div class="cell" onclick="showToast('在线客服')">
+        <span class="cell__icon" style="background:rgba(6,182,212,.12);color:#06B6D4"><svg class="icon"><use href="#i-message"/></svg></span>
+        <div class="cell__body"><div class="cell__title">在线客服</div><div class="cell__desc">工作日 8:00–22:00</div></div>
+        <span class="cell__arrow"><svg class="icon"><use href="#i-chevright"/></svg></span>
+      </div>
+    </div>
+
+    <div class="divider">选择上门时间</div>
+    <div class="cell-group" style="padding-top:12px">
+      <div style="padding:0 16px 8px;font-size:13px;color:var(--wb-color-text-2);display:flex;align-items:center;gap:6px"><svg class="icon" style="width:14px;height:14px"><use href="#i-calendar"/></svg>今天 9 月 30 日</div>
+      <div class="time-slots">
+        <div class="time-slot disabled">09:00</div><div class="time-slot disabled">10:00</div>
+        <div class="time-slot active" onclick="selectTime(this)">11:00</div><div class="time-slot" onclick="selectTime(this)">13:00</div>
+        <div class="time-slot" onclick="selectTime(this)">14:00</div><div class="time-slot" onclick="selectTime(this)">15:00</div>
+      </div>
+      <div style="padding:0 16px 8px;font-size:13px;color:var(--wb-color-text-2);display:flex;align-items:center;gap:6px"><svg class="icon" style="width:14px;height:14px"><use href="#i-calendar"/></svg>明天 10 月 1 日</div>
+      <div class="time-slots" style="padding-top:0">
+        <div class="time-slot" onclick="selectTime(this)">09:00</div><div class="time-slot" onclick="selectTime(this)">10:00</div>
+        <div class="time-slot" onclick="selectTime(this)">11:00</div><div class="time-slot" onclick="selectTime(this)">13:00</div>
+        <div class="time-slot" onclick="selectTime(this)">14:00</div><div class="time-slot" onclick="selectTime(this)">15:00</div>
+      </div>
+    </div>
+
+    <div style="height:12px"></div>
+  </div>
+
+  <div class="wx-actionbar">
+    <button class="btn btn--default btn--lg" style="flex:0 0 54px" onclick="showToast('已收藏')" aria-label="收藏"><svg class="icon icon--20"><use href="#i-heart"/></svg></button>
+    <button class="btn btn--default btn--lg" style="flex:0 0 auto;padding:0 16px" onclick="showToast('已联系客服')"><svg class="icon"><use href="#i-message"/></svg>客服</button>
+    <button class="btn btn--primary btn--lg" onclick="showToast('已提交预约')">立即预约</button>
+  </div>
+
+  <nav class="wx-tabbar">
+    <div class="wx-tabbar__item active"><svg class="icon icon--20"><use href="#i-home"/></svg>首页</div>
+    <div class="wx-tabbar__item" onclick="showToast('分类')"><svg class="icon icon--20"><use href="#i-grid"/></svg>分类</div>
+    <div class="wx-tabbar__item" onclick="showToast('订单')"><svg class="icon icon--20"><use href="#i-clipboard"/></svg>订单<span class="wx-tabbar__badge"></span></div>
+    <div class="wx-tabbar__item" onclick="showToast('我的')"><svg class="icon icon--20"><use href="#i-user"/></svg>我的</div>
+  </nav>
+
+  <div class="wx-toast" id="toast"></div>
+</div>
+
+<script>
+const html=document.documentElement;
+document.getElementById('themeToggle').addEventListener('click',function(){
+  const next=html.getAttribute('data-theme')==='dark'?'light':'dark';
+  html.setAttribute('data-theme',next);
+  this.innerHTML='<svg class="icon"><use href="'+(next==='dark'?'#i-sun':'#i-moon')+'"/></svg>';
+  try{localStorage.setItem('wb-theme',next)}catch(e){}
+});
+(function(){let s;try{s=localStorage.getItem('wb-theme')}catch(e){}if(s){html.setAttribute('data-theme',s);document.getElementById('themeToggle').innerHTML='<svg class="icon"><use href="'+(s==='dark'?'#i-sun':'#i-moon')+'"/></svg>'}})();
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML='<svg class="icon" style="width:15px;height:15px"><use href="#i-check"/></svg>'+msg;
+  t.classList.add('show');clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+function selectTime(el){
+  if(el.classList.contains('disabled'))return;
+  document.querySelectorAll('.time-slot').forEach(s=>{if(!s.classList.contains('disabled'))s.classList.remove('active')});
+  el.classList.add('active');showToast('已选 '+el.textContent);
+}
+</script>
+</body>
+</html>
